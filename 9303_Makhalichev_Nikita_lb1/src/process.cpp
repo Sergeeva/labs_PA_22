@@ -14,6 +14,7 @@ void read_matrix(vector<int>* matrix, string filename){
     matrix_file.open(filename);
     while (matrix_file >> input)
         matrix->push_back(input);
+    matrix_file.close();
 }
 
 void read_matrices(vector<int>* first_matrix, vector<int>* second_matrix){
@@ -33,7 +34,8 @@ void write_result(vector<int>* result_matrix, long int rows, long int cols){
         for (long int j = 0; j < cols; j++)
             matrix_file << (*result_matrix)[i*cols + j] << ' ';
         matrix_file << endl;
-    }       
+    }
+    matrix_file.close();
 }
 
 int main(int argc, char *argv[]){
@@ -56,6 +58,8 @@ int main(int argc, char *argv[]){
     vector<int> result_matrix(first_matrix.size());
     id_sum = fork();
     switch(id_sum){
+    	case -1:
+            exit(-1);
         case 0:
             start = chrono::high_resolution_clock::now();
             sum_matrices(&first_matrix, &second_matrix, &result_matrix);
@@ -65,6 +69,8 @@ int main(int argc, char *argv[]){
             
             id_write = fork();
             switch(id_write){
+            	case -1:
+            	    exit(-1);
             	case 0:
             	    start = chrono::high_resolution_clock::now();
             	    write_result(&result_matrix, rows, cols);
@@ -80,7 +86,5 @@ int main(int argc, char *argv[]){
         default:
 	    wait(&id_sum);
     }
-    //cout << sum_id;
-    
     return 0;
 }
