@@ -1,0 +1,58 @@
+#include "writingprocess.h"
+
+WritingProcess::WritingProcess(char *fileName) {
+    sharedMemory = new SharedMemory(WRITE);
+    outputFileName = fileName;
+}
+
+WritingProcess::~WritingProcess() {
+    delete sharedMemory;
+}
+
+void WritingProcess::run() {
+    if (!sharedMemory->checkMemory()) {
+        std::cerr << "Shared memory error: unable to allocate memory\n";
+        return;
+    }
+
+    sharedMemory->setProcessStatus(WRITE, RUN);
+//    std::cout << "Writing process start\n";
+
+    try {
+        writeMatrix();
+    } catch (std::runtime_error &exception) {
+        sharedMemory->crash();
+        std::cerr << exception.what() << '\n';
+    }
+
+    sharedMemory->setProcessStatus(WRITE, TERMINATE);
+//    std::cout << "Writing process terminate\n";
+}
+
+void WritingProcess::writeMatrix() {
+    auto output = [&] (std::ostream &out) -> int {
+        int y = 0;
+        while (sharedMemory->getProcessStatus(CALCULATE) != TERMINATE || sharedMemory->getMatrixHeight(C) > y) {
+            for (int x = 0; x < sharedMemory->getMatrixWidth(C); x++) {
+                out << sharedMemory->getValue(C, x, y) << ' ';
+            }
+            out << '\n';
+            y++;
+            if (sharedMemory->isCrash()) {
+                return -1;
+            }
+        }
+        return 0;
+    };
+
+    if (outputFileName != nullptr) {
+        std::ofstream file(outputFileName);
+        if (!file.is_open()) {
+            throw std::runtime_error("Reading process error: invalid file");
+        }
+        output(file);
+        file.close();
+    } else {
+        output(std::cout);
+    }
+}
