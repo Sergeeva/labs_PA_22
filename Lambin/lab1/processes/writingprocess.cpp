@@ -48,7 +48,8 @@ void WritingProcess::writeMatrix() {
     if (outputFileName != nullptr) {
         std::ofstream file(outputFileName);
         if (!file.is_open()) {
-            throw std::runtime_error("Reading process error: invalid file");
+            sharedMemory->crash();
+            throw std::runtime_error("Writing process error: invalid file");
         }
         output(file);
         file.close();
