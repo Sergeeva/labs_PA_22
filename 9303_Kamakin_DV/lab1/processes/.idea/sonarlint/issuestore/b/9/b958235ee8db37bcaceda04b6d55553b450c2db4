@@ -1,0 +1,3 @@
+
+j	cpp:S5276"Pimplicit conversion turns floating-point number into integer: 'double' to 'long'(Þ´ˆËûÿÿÿÿ
+s	cpp:S5276"Yimplicit conversion from 'uintmax_t' (aka 'unsigned long') to 'double' may lose precision(Þ´ˆËûÿÿÿÿ
