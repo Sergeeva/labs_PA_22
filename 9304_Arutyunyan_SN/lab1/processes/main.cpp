@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
+#include <iostream>
 
 #include "../common/matrix.hpp"
 #include "../common/matrix_generation.hpp"
@@ -12,12 +13,11 @@
 
 constexpr std::size_t N = 5;
 constexpr std::size_t M = 5;
-constexpr auto MATRIXES_SHM_NAME = "matrixes_shm";
 
 struct MatrixesSharedMemory {
-    void* matrix1 = nullptr;
-    void* matrix2 = nullptr;
-    void* summed_matrix = nullptr;
+    char* matrix1 = nullptr;
+    char* matrix2 = nullptr;
+    char* summed_matrix = nullptr;
 };
 
 void* create_shared_memory(size_t size) {
@@ -29,16 +29,15 @@ void* create_shared_memory(size_t size) {
 
 MatrixesSharedMemory CreateSharedMemory() {
     MatrixesSharedMemory memory;
-    memory.matrix1 = create_shared_memory(sizeof(Matrix<N, M>::value_type) * N * M);
-    memory.matrix2 = create_shared_memory(sizeof(Matrix<N, M>::value_type) * N * M);
-    memory.summed_matrix = create_shared_memory(sizeof(Matrix<N, M>::value_type) * N * M);
+    memory.matrix1 = (char*) create_shared_memory(sizeof(MatrixValueType) * N * M);
+    memory.matrix2 = (char*) create_shared_memory(sizeof(MatrixValueType) * N * M);
+    memory.summed_matrix = (char*) create_shared_memory(sizeof(MatrixValueType) * N * M);
 
     return memory;
 }
 
-template <std::size_t N, std::size_t M>
-Matrix<N, M> MatrixAddition(const Matrix<N, M>& matrix1, const Matrix<N, M>& matrix2) {
-    Matrix<N, M> result;
+Matrix MatrixAddition(const Matrix& matrix1, const Matrix& matrix2) {
+    Matrix result(N, Row(M));
 
     for (std::size_t i = 0; i < N; ++i) {
         for (std::size_t j = 0; j < M; ++j) {
@@ -49,26 +48,39 @@ Matrix<N, M> MatrixAddition(const Matrix<N, M>& matrix1, const Matrix<N, M>& mat
     return result;
 }
 
-void GenerateMatrixesInProcess(const MatrixesSharedMemory& memory) {
-    auto matrix1 = GenerateMatrix<N, M>();
-    auto matrix2 = GenerateMatrix<N, M>();
+void WriteMatrixToSharedMemory(const Matrix& matrix, char* shared_memory) {
+    for (std::size_t i = 0; i < N; ++i) {
+        memcpy(shared_memory + i * M * sizeof(MatrixValueType), matrix[i].data(), M * sizeof(MatrixValueType));
+    }
+}
 
-    memcpy(memory.matrix1, &matrix1, sizeof(matrix1));
-    memcpy(memory.matrix2, &matrix2, sizeof(matrix2));
+void ReadMatrixFromSharedMemory(Matrix& matrix, char* shared_memory) {
+
+    for (std::size_t i = 0; i < N; ++i) {
+        memcpy(matrix[i].data(), shared_memory + i * M * sizeof(MatrixValueType), M * sizeof(MatrixValueType));
+    }
+}
+
+void GenerateMatrixesInProcess(const MatrixesSharedMemory& memory) {
+    auto matrix1 = GenerateMatrix(N, M);
+    auto matrix2 = GenerateMatrix(N, M);
+
+    WriteMatrixToSharedMemory(matrix1, memory.matrix1);
+    WriteMatrixToSharedMemory(matrix2, memory.matrix2);
 }
 
 void MatrixesAdditionInProcess(const MatrixesSharedMemory& memory) {
-    Matrix<N, M> matrix1, matrix2;
-    memcpy(&matrix1, memory.matrix1, sizeof(matrix1));
-    memcpy(&matrix2, memory.matrix2, sizeof(matrix2));
+    Matrix matrix1(N, Row(M)), matrix2(N, Row(M));
+    ReadMatrixFromSharedMemory(matrix1, memory.matrix1);
+    ReadMatrixFromSharedMemory(matrix2, memory.matrix2);
 
     auto summed_matrix = MatrixAddition(matrix1, matrix2);
-    memcpy(memory.summed_matrix, &summed_matrix, sizeof(summed_matrix));
+    WriteMatrixToSharedMemory(summed_matrix, memory.summed_matrix);
 }
 
 void WriteSummedMatrixToFileInProcess(const MatrixesSharedMemory& memory) {
-    Matrix<N, M> summed_matrix;
-    memcpy(&summed_matrix, memory.summed_matrix, sizeof(summed_matrix));
+    Matrix summed_matrix(N, Row(M));
+    ReadMatrixFromSharedMemory(summed_matrix, memory.summed_matrix);
 
     std::ofstream file("result.txt");
     MatrixWrite(summed_matrix, file);
