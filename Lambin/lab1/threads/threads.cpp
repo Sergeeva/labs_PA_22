@@ -13,13 +13,14 @@ Threads::Threads(std::vector<char *> filesNames) {
 void Threads::run() {
     std::thread readingThread(Threads::reading,
         &matrixA, &matrixB, inputFileName, &readingStatus, &isCrash);
+    readingThread.join();
+
     std::thread calculationThread(Threads::calculation,
         &matrixA, &matrixB, &matrixC, &readingStatus, &calculationStatus, &isCrash);
+    calculationThread.join();
+
     std::thread writingThread(Threads::writing,
         &matrixC, outputFileName, &calculationStatus, &writingStatus, &isCrash);
-
-    readingThread.join();
-    calculationThread.join();
     writingThread.join();
 
 }
