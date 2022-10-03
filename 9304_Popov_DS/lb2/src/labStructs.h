@@ -4,7 +4,8 @@
 #include <queue>
 #include <vector>
 #include <cstdint>
-#include <mutex>
+#include <shared_mutex>
+#include <condition_variable>
 
 
 
@@ -12,6 +13,10 @@ namespace labStruct
 {
 
 using uint = uint32_t;
+
+std::condition_variable_any matrixQueueBell;
+std::shared_mutex sumSMutex;
+std::mutex resultMutex;
 
 struct Matrix {
 
@@ -47,6 +52,12 @@ struct MatrixQueue {
         }
 
         return fronElement;
+    }
+
+    uint getMatrixQueueSize() 
+    {
+        std::lock_guard<std::mutex> ul(matrixMutex);
+        return matrixQueue.size();
     }
 
     void pushInResultQueue(const std::vector<uint>& matrix)
