@@ -31,16 +31,17 @@ void WritingProcess::run() {
 
 void WritingProcess::writeMatrix() {
     auto output = [&] (std::ostream &out) -> int {
-        int y = 0;
-        while (sharedMemory->getProcessStatus(CALCULATE) != TERMINATE || sharedMemory->getMatrixHeight(C) > y) {
-            for (int x = 0; x < sharedMemory->getMatrixWidth(C); x++) {
+        for (int y = 0; y < sharedMemory->getMatrixHeight(A); y++) {
+            while (y == sharedMemory->getMatrixHeight(C)) {
+                std::cout << y << ' ' << sharedMemory->getMatrixHeight(C) << '\n';
+                if (sharedMemory->isCrash()) {
+                    return -1;
+                }
+            }
+            for (int x = 0; x < sharedMemory->getMatrixWidth(A); x++) {
                 out << sharedMemory->getValue(C, x, y) << ' ';
             }
             out << '\n';
-            y++;
-            if (sharedMemory->isCrash()) {
-                return -1;
-            }
         }
         return 0;
     };

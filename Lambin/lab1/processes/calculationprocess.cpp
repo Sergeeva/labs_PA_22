@@ -35,14 +35,21 @@ void CalculationProcess::calculateMatrix() {
         }
     }
 
-    int y = 0;
-    while (sharedMemory->getProcessStatus(READ) != TERMINATE || sharedMemory->getMatrixHeight(B) > y) {
-        if (sharedMemory->getMatrixHeight(B) > y) {
-            for (int x = 0; x < sharedMemory->getMatrixWidth(A); x++) {
-                double sum = sharedMemory->getValue(A, x, y) + sharedMemory->getValue(B, x, y);
-                sharedMemory->setValue(sum, C, x, y);
+    while (sharedMemory->getMatrixHeight(B) == 0) {
+        if (sharedMemory->isCrash()) {
+            return;
+        }
+    }
+
+    for (int y = 0; y < sharedMemory->getMatrixHeight(A); y++) {
+        while (y == sharedMemory->getMatrixHeight(B)) {
+            if (sharedMemory->isCrash()) {
+                return;
             }
         }
-        y++;
+        for (int x = 0; x < sharedMemory->getMatrixWidth(A); x++) {
+            double sum = sharedMemory->getValue(A, x, y) + sharedMemory->getValue(B, x, y);
+            sharedMemory->setValue(sum, C, x, y);
+        }
     }
 }
