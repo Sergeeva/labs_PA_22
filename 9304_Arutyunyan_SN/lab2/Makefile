@@ -1,10 +1,6 @@
 CXX ?= g++
 CXXFLAGS := -pthread -std=c++2a -Wall
 
-.PHONY: processes
-processes:
-	$(CXX) $(CXXFLAGS) processes/main.cpp -o processes.out && ./processes.out
-
 .PHONY: threads
 threads:
 	$(CXX) $(CXXFLAGS) threads/main.cpp -o threads.out && ./threads.out
