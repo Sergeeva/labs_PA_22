@@ -14,6 +14,7 @@ void read_matrix(vector<int>* matrix, string filename){
     matrix_file.open(filename);
     while (matrix_file >> input)
         matrix->push_back(input);
+    matrix_file.close();
 }
 
 void read_matrices(vector<int>* first_matrix, vector<int>* second_matrix){
@@ -25,6 +26,7 @@ void sum_matrices(vector<int>* first_matrix, vector<int>* second_matrix, vector<
     for (long long int i = start_index; i < start_index + size; i++)
     	if (i < first_matrix->size())
             (*result_matrix)[i] = (*first_matrix)[i] + (*second_matrix)[i];
+        else break;
 }
 
 void write_result(vector<int>* result_matrix, long int rows, long int cols){
@@ -34,7 +36,8 @@ void write_result(vector<int>* result_matrix, long int rows, long int cols){
         for (long int j = 0; j < cols; j++)
             matrix_file << (*result_matrix)[i*cols + j] << ' ';
         matrix_file << endl;
-    }       
+    }
+    matrix_file.close();
 }
 
 int main(int argc, char *argv[]){
@@ -49,7 +52,7 @@ int main(int argc, char *argv[]){
     vector<thread> sum_threads(N);
     
     auto start = chrono::high_resolution_clock::now();
-    thread thread_read = thread{read_matrices, &first_matrix, &second_matrix};
+    thread thread_read(read_matrices, &first_matrix, &second_matrix);
     thread_read.join();
     auto stop = chrono::high_resolution_clock::now();
     auto duration = chrono::duration_cast<chrono::milliseconds>(stop - start);
@@ -60,7 +63,7 @@ int main(int argc, char *argv[]){
     
     start = chrono::high_resolution_clock::now();
     for (long long int i = 0; i < N; i++)
-    	sum_threads[i] = thread{sum_matrices, &first_matrix, &second_matrix, &result_matrix, i*size, i*size+size};
+    	sum_threads[i] = thread(sum_matrices, &first_matrix, &second_matrix, &result_matrix, i*size, i*size+size);
     for (long long int i = 0; i < sum_threads.size(); i++)
     	sum_threads[i].join();
     stop = chrono::high_resolution_clock::now();
@@ -68,7 +71,7 @@ int main(int argc, char *argv[]){
     cout << "Sum duration - " << duration.count() << "ms" << endl;
     
     start = chrono::high_resolution_clock::now();
-    thread thread_write = thread{write_result, &result_matrix, rows, cols};
+    thread thread_write(write_result, &result_matrix, rows, cols);
     thread_write.join();
     stop = chrono::high_resolution_clock::now();
     duration = chrono::duration_cast<chrono::milliseconds>(stop - start);
