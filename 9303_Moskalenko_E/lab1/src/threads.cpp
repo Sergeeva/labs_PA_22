@@ -21,18 +21,26 @@ void multiThreadsAddition(vector<vector<int>> &firstMatrix, vector<vector<int>> 
     for (int countOfThreads = 2; countOfThreads < N + 1; countOfThreads++) { // min 2, max - N
         cout << "Count of threads : " << countOfThreads << endl;
 
+        int part = N / countOfThreads; // сколько каждому потоку заполнять строк
+
         auto start = high_resolution_clock::now();
 
-        int part = N / countOfThreads; // сколько каждому потоку заполнять строк
+        std::vector<std::thread> vecOfThreads;
+        vecOfThreads.reserve(countOfThreads);
+
         int rowStart = 0;
         for (int threadNumber = 0; threadNumber < countOfThreads; threadNumber++) {
             int rowStop = (threadNumber == countOfThreads - 1) ? N : rowStart + part;
             //cout << rowStart << " " << rowStop << endl;
-            thread rangeAddition(makeRangeAddition, ref(firstMatrix),
-                                 ref(secondMatrix), ref(additionMatrix), rowStart, rowStop);
-            rangeAddition.join();
+            vecOfThreads.emplace_back(thread(makeRangeAddition, ref(firstMatrix),
+                                             ref(secondMatrix), ref(additionMatrix), rowStart, rowStop));
             rowStart = rowStop;
         }
+
+        for (int i = 0; i < vecOfThreads.size(); i++) {
+            vecOfThreads[i].join();
+        }
+
 
         auto stop = high_resolution_clock::now();
 
