@@ -10,9 +10,9 @@
 #include "../common/matrix_write.hpp"
 #include "../common/semaphore.hpp"
 
-constexpr std::size_t N = 15000;
-constexpr std::size_t M = 15000;
-constexpr std::size_t THREADS = 1;
+constexpr std::size_t N = 1000;
+constexpr std::size_t M = 1000;
+constexpr std::size_t THREADS = 4;
 std::atomic<long> common_time{0};
 
 std::queue<MatrixPtrPair> addition_queue;
@@ -24,7 +24,6 @@ void MatrixAddition(
         const MatrixPtr& matrix1, const MatrixPtr& matrix2, MatrixPtr& result,
         std::size_t row_start, std::size_t row_end,
         std::size_t column_start, std::size_t column_end) {
-    std::cout << "start: " << std::this_thread::get_id() << std::endl;
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
     for (std::size_t i = row_start; i <= row_end; ++i) {
@@ -42,17 +41,22 @@ MatrixPtr MatrixAdditionHelper(const MatrixPtr& matrix1, const MatrixPtr& matrix
     std::size_t column_start = 0, column_middle = M / 2, column_end = M - 1;
 
     auto result = std::make_shared<Matrix>(N, Row(M));
-    std::array<std::thread, THREADS - 1> threads = {
-        // std::thread{MatrixAddition, std::ref(matrix1), std::ref(matrix2), std::ref(result),
-        //                                   row_start, row_middle, column_start, column_middle},
-        // std::thread{MatrixAddition, std::ref(matrix1), std::ref(matrix2), std::ref(result),
-        //                                   row_middle + 1, row_end, column_start, column_middle},
-        // std::thread{MatrixAddition, std::ref(matrix1), std::ref(matrix2), std::ref(result),
-        //                                   row_start, row_middle, column_middle + 1, column_end},
-    };
 
-    // MatrixAddition(matrix1, matrix2, result, row_middle + 1, row_end, column_middle + 1, column_end);
-    // MatrixAddition(matrix1, matrix2, result, row_start, row_end, column_start, column_end);
+    std::array<std::thread, THREADS - 1> threads;
+    if constexpr (THREADS == 4) {
+        threads = {
+            std::thread{MatrixAddition, std::ref(matrix1), std::ref(matrix2), std::ref(result),
+                                              row_start, row_middle, column_start, column_middle},
+            std::thread{MatrixAddition, std::ref(matrix1), std::ref(matrix2), std::ref(result),
+                                              row_middle + 1, row_end, column_start, column_middle},
+            std::thread{MatrixAddition, std::ref(matrix1), std::ref(matrix2), std::ref(result),
+                                              row_start, row_middle, column_middle + 1, column_end},
+        };
+        
+        MatrixAddition(matrix1, matrix2, result, row_middle + 1, row_end, column_middle + 1, column_end);
+    } else if (THREADS == 1) {
+        MatrixAddition(matrix1, matrix2, result, row_start, row_end, column_start, column_end);
+    }
 
     for (auto& thread : threads) thread.join();
 
