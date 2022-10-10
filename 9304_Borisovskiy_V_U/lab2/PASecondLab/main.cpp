@@ -4,6 +4,9 @@
 #include "utils.h"
 
 #define bufferSize 10
+#define threadsSize 10
+#define N 2
+#define M 2
 
 
 std::mutex mutexForOriginMatrices;
@@ -88,8 +91,8 @@ void consumeOriginMatrices() {
 
 void produceOriginMatrices() {
     while (true) {
-        Matrix firstMatrix = generateMatrix(2, 2);
-        Matrix secondMatrix = generateMatrix(2, 2);
+        Matrix firstMatrix = generateMatrix(N, M);
+        Matrix secondMatrix = generateMatrix(N, M);
         std::pair<Matrix, Matrix> matricesForSum;
         matricesForSum.first = firstMatrix;
         matricesForSum.second = secondMatrix;
@@ -110,12 +113,12 @@ void produceOriginMatrices() {
 
 
 int main() {
-    originMatricesBuffer.reserve(10);
-    resultMatricesBuffer.reserve(10);
+    originMatricesBuffer.reserve(bufferSize);
+    resultMatricesBuffer.reserve(bufferSize);
     std::vector<std::thread> threads;
-    threads.reserve(30);
+    threads.reserve(threadsSize * 3);
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < threadsSize; i++) {
         std::thread producerThread(produceOriginMatrices);
         threads.push_back(std::move(producerThread));
 
