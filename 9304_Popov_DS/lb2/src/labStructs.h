@@ -1,11 +1,11 @@
 #pragma once
 
-#include <list>
 #include <queue>
 #include <vector>
+#include <random>
 #include <cstdint>
-#include <shared_mutex>
 #include <condition_variable>
+#include <atomic>
 
 
 
@@ -14,12 +14,9 @@ namespace labStruct
 
 using uint = uint32_t;
 
-std::condition_variable_any matrixQueueBell;
-std::shared_mutex sumSMutex;
-std::mutex resultMutex;
-
-struct Matrix {
-
+class Matrix 
+{
+public:
     explicit Matrix(const uint& row, const uint& column)
     {
         const uint size =  row * column;
@@ -32,60 +29,52 @@ struct Matrix {
 };
 
 
-struct MatrixQueue {
-    void pushInMatrixQueue(Matrix* const matrix)
+template <class T>
+class CustomQueue 
+{
+public:
+    void push(T element)
     {
-        std::lock_guard<std::mutex> ul(matrixMutex);
-        matrixQueue.push(matrix);
+        std::lock_guard<std::mutex> ul(queueMutex);
+        customQueue.push(std::move(element));
+        queueCount.fetch_add(1);
+        queueBell.notify_one();
     }
 
-    Matrix* retrieveAndDeleteMatrix()
+    T pop()
     {
-        Matrix* fronElement = nullptr;
+        std::unique_lock<std::mutex> ul(queueMutex);
 
-        std::lock_guard<std::mutex> ul(matrixMutex);
+        queueBell.wait(ul, [this](){ return queueCount.load() > 0; });
 
-        if (!matrixQueue.empty())
-        {
-            fronElement = matrixQueue.front();
-            matrixQueue.pop();
-        }
+        queueCount.fetch_add(-1);
+
+        auto fronElement = customQueue.front();
+        customQueue.pop();
 
         return fronElement;
     }
 
-    uint getMatrixQueueSize() 
-    {
-        std::lock_guard<std::mutex> ul(matrixMutex);
-        return matrixQueue.size();
-    }
-
-    void pushInResultQueue(const std::vector<uint>& matrix)
-    {
-        std::lock_guard<std::mutex> ul(resultMutex);
-        resultQueue.push(matrix);
-    }
-
-    std::vector<uint> retrieveAndDeleteResult()
-    {
-        std::vector<uint> result;
-
-        std::lock_guard<std::mutex> ul(resultMutex);
-
-        if (!resultQueue.empty())
-        {
-            result = resultQueue.front();
-            resultQueue.pop();
-        }
-
-        return result;
-    }
-
 private:
-    std::queue<Matrix*> matrixQueue;
-    std::queue<std::vector<uint>> resultQueue;
-    std::mutex matrixMutex;
-    std::mutex resultMutex;
+    std::condition_variable queueBell;
+    std::atomic<uint> queueCount {0};
+    std::queue<T> customQueue;
+    std::mutex queueMutex;
 };
+
+
+namespace random
+{
+
+std::random_device device;
+std::mt19937 randomGenerator;
+std::uniform_int_distribution<uint> range(0, 49);
+
+uint getRandomNumber()
+{
+    return range(randomGenerator);
+}
+
+}
 
 }

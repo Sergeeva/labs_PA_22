@@ -1,14 +1,13 @@
-#include <random>
 #include <fstream>
 #include <thread>
 
 #include "ThreadLab.h"
 #include "labStructs.h"
 
-#define ROW 10'000
-#define COL 10'000
+#define ROW 10
+#define COL 10
 
-#undef DURATION_TIME
+#define DURATION_TIME
 
 #ifdef DURATION_TIME
 #include <chrono>
@@ -17,27 +16,29 @@
 
 
 
-void generateMatrix(labStruct::MatrixQueue* const, const labStruct::uint&);
-void sumMatrix(labStruct::MatrixQueue* const,      const labStruct::uint&);
-void resultMatrix(labStruct::MatrixQueue* const,   const labStruct::uint&);
+void generateMatrix(labStruct::CustomQueue<labStruct::Matrix*>* const, const labStruct::uint&);
+void sumMatrix(labStruct::CustomQueue<labStruct::Matrix*>* const,
+               labStruct::CustomQueue<std::vector<labStruct::uint>>* const,
+               const labStruct::uint&);
+void resultMatrix  (labStruct::CustomQueue<std::vector<labStruct::uint>>* const, const labStruct::uint&);
 
 
 
 void startLab(const labStruct::uint& count)
 {
-    auto queue = new labStruct::MatrixQueue;
+    auto matrixQueue = new labStruct::CustomQueue<labStruct::Matrix*>;
+    auto resultQueue = new labStruct::CustomQueue<std::vector<labStruct::uint>>;
 
 #ifdef DURATION_TIME
     auto begin = std::chrono::steady_clock::now();
 #endif
 
-    std::thread firstThread (generateMatrix, queue, count);
-    std::thread secondThread(sumMatrix,      queue, count);
-    std::thread thirdThread (resultMatrix,   queue, count);
+    std::thread firstThread (generateMatrix, matrixQueue, count);
+    std::thread secondThread(sumMatrix,      matrixQueue, resultQueue, count);
+    std::thread thirdThread (resultMatrix,   resultQueue, count);
 
     firstThread.join();
     secondThread.join();
-
 
 #ifdef DURATION_TIME
     auto end = std::chrono::steady_clock::now();
@@ -47,12 +48,13 @@ void startLab(const labStruct::uint& count)
 
     thirdThread.join();
 
-    delete queue;
+    delete matrixQueue;
+    delete resultQueue;
 }
 
 
 
-void generateMatrix(labStruct::MatrixQueue* const queue, const labStruct::uint& count)
+void generateMatrix(labStruct::CustomQueue<labStruct::Matrix*>* const queue, const labStruct::uint& count)
 {
     labStruct::uint generateCount = 0;
 
@@ -62,14 +64,11 @@ void generateMatrix(labStruct::MatrixQueue* const queue, const labStruct::uint& 
 
         for (labStruct::uint i = 0; i < matrix->firstMatrix.size(); ++i)
         {
-            // rand() дорогая операция, странно работает в многопотоке.
-            matrix->firstMatrix [i] = 1; //rand() % 28 + 1;
-            matrix->secondMatrix[i] = 2; //rand() % 28 + 41;
+            matrix->firstMatrix [i] = 1; //labStruct::random::getRandomNumber();
+            matrix->secondMatrix[i] = 2; //labStruct::random::getRandomNumber();
         }
 
-        queue->pushInMatrixQueue(matrix);
-
-        labStruct::matrixQueueBell.notify_one();
+        queue->push(matrix);
 
         ++generateCount;
     }
@@ -77,50 +76,39 @@ void generateMatrix(labStruct::MatrixQueue* const queue, const labStruct::uint& 
 
 
 
-void sumMatrix(labStruct::MatrixQueue* const queue, const labStruct::uint& count)
+void sumMatrix(labStruct::CustomQueue<labStruct::Matrix*>* const matrixsQueue,
+               labStruct::CustomQueue<std::vector<labStruct::uint>>* const resultQueue,
+               const labStruct::uint& count)
 {
     labStruct::uint sumCount = 0;
-    std::shared_lock<std::shared_mutex> ul(labStruct::sumSMutex);
 
     while (sumCount != count)
     {
-        auto matrix = queue->retrieveAndDeleteMatrix();
+        auto matrixs = matrixsQueue->pop();
 
-        if (!matrix)
-        {
-            labStruct::matrixQueueBell.wait(ul, [&queue](){ return queue->getMatrixQueueSize() > 0; });
-            matrix = queue->retrieveAndDeleteMatrix();
-        }
+        std::vector<labStruct::uint> result(matrixs->firstMatrix.size());
 
-        std::vector<labStruct::uint> result;
-        result.resize(matrix->firstMatrix.size());
+        for (labStruct::uint i = 0; i < matrixs->firstMatrix.size(); ++i)
+            result[i] = matrixs->firstMatrix[i] + matrixs->secondMatrix[i];   
 
-       for (labStruct::uint i = 0; i < matrix->firstMatrix.size(); ++i)
-            result[i] = matrix->firstMatrix [i] + matrix->secondMatrix[i];   
-
-        queue->pushInResultQueue(result);
+        resultQueue->push(result);
 
         ++sumCount;
 
-        delete matrix;
+        delete matrixs;
     }
 }
 
 
 
-void resultMatrix(labStruct::MatrixQueue* const queue, const labStruct::uint& count)
+void resultMatrix(labStruct::CustomQueue<std::vector<labStruct::uint>>* const queue, const labStruct::uint& count)
 {
-    std::lock_guard<std::mutex> lg(labStruct::resultMutex);
-
     labStruct::uint outputCount = 0;
     std::ofstream resultFile("./result.txt");
 
     while (outputCount != count)
     {
-        auto result = queue->retrieveAndDeleteResult();
-
-        if (result.empty())
-            continue;
+        auto result = queue->pop();
 
         if (resultFile)
         {
