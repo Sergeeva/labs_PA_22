@@ -1,21 +1,20 @@
-#include <spdlog/spdlog.h>
 #include <fstream>
 #include "../headers/InputReader.h"
 
 void InputReader::run() {
-    spdlog::info("InputReader started");
+    Log::info("InputReader started");
 
     std::ifstream input_file(file_name);
 
     for (auto i = 0; i < iterations_count; i++) {
-        spdlog::info("InputReader iteration №{}", i);
+        Log::info("InputReader iteration #" + std::to_string(i));
 
         auto holder = MatricesHolder();
 
         read_matrix(input_file, holder.get_first());
         read_matrix(input_file, holder.get_second());
 
-        spdlog::info("InputReader read matrices");
+        Log::info("InputReader read matrices");
 
         queue.push(holder);
 

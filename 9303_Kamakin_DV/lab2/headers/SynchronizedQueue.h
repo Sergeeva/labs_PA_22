@@ -3,7 +3,9 @@
 
 #include <queue>
 #include <mutex>
-#include <spdlog/spdlog.h>
+#include <condition_variable>
+#include <atomic>
+#include "Log.h"
 
 template<typename T>
 class SynchronizedQueue {
@@ -18,11 +20,15 @@ private:
 public:
 
     T pop() {
-        spdlog::debug("Attempt to acquire lock");
+        if (is_closed) {
+            throw std::runtime_error("Queue is not producing elements");
+        }
+
+        Log::info("Attempt to acquire lock");
 
         std::unique_lock<std::mutex> lock(mutex);
 
-        spdlog::debug("Start waiting for objects in queue");
+        Log::info("Start waiting for objects in queue");
 
         has_elements.wait(lock, [this]() {
             if (is_closed) {
@@ -32,22 +38,26 @@ public:
             return queue.size() != 0;
         });
 
-        spdlog::debug("Done waiting for objects in queue");
+        Log::info("Done waiting for objects in queue");
 
         auto elem = queue.front();
         queue.pop();
 
         has_elements.notify_one();
 
-        spdlog::debug("Element was removed from the queue");
+        Log::info("Element was removed from the queue");
 
         return elem;
     }
 
     void push(T &elem) {
+        if (is_closed) {
+            throw std::runtime_error("Queue is not consuming elements");
+        }
+
         std::scoped_lock<std::mutex> lock(mutex);
 
-        spdlog::debug("Element was successfully pushed to the queue");
+        Log::info("Element was successfully pushed to the queue");
 
         queue.push(elem);
 

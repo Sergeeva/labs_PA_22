@@ -1,16 +1,15 @@
-#include <spdlog/spdlog.h>
 #include <iostream>
 #include <fstream>
 #include "../headers/OutputWriter.h"
 #include "../headers/Configuration.h"
 
 void OutputWriter::run() {
-    spdlog::info("Start OutputWriter");
+    Log::info("Start OutputWriter");
 
     std::ofstream matrix_output_file(Configuration::output_file_name);
 
     for (auto i = 0; i < iterations_count; i++) {
-        spdlog::info("OutputWriter iteration №{}", i);
+        Log::info("OutputWriter iteration #" + std::to_string(i));
 
         auto matrix = sums_queue.pop();
 
@@ -19,7 +18,7 @@ void OutputWriter::run() {
 
     matrix_output_file.close();
 
-    spdlog::info("OutputWriter work done");
+    Log::info("OutputWriter work done");
 }
 
 void OutputWriter::print_result(std::ofstream &file, Matrix &matrix) {

@@ -1,5 +1,4 @@
 #include <future>
-#include <spdlog/spdlog.h>
 #include "../headers/Starter.h"
 #include "../headers/Worker.h"
 #include "../headers/OutputWriter.h"
@@ -7,9 +6,11 @@
 #include "../headers/InputReader.h"
 
 void Starter::run() {
+    Log::info("Starter work begin");
+
     run(Configuration::small_matrix_file_name, 5, 2);
 
-    spdlog::info("Program finished successfully");
+    Log::info("Program finished successfully");
 }
 
 void Starter::run(const std::string &file_name, int iterations_count, int thread_count) {

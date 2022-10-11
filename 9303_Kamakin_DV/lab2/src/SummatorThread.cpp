@@ -1,5 +1,5 @@
+#include <thread>
 #include "../headers/SummatorThread.h"
-
 
 void SummatorThread::run() {
     thread = std::thread([this]() { start(); });
@@ -10,7 +10,7 @@ void SummatorThread::join() {
 }
 
 void SummatorThread::start() {
-    spdlog::info("SummatorThread №{} starting, is need to work: {}", id, is_need_to_work);
+    Log::info("SummatorThread started, #" + std::to_string(id));
 
     try {
         while (true) {
@@ -20,9 +20,9 @@ void SummatorThread::start() {
             processed_batches.notify_one();
         }
     } catch (std::runtime_error &e) {
-        spdlog::error(e.what());
+        Log::info(e.what());
     }
 
-    spdlog::info("SummatorThread №{} has stopped", id);
+    Log::info("SummatorThread has stopped, #" + std::to_string(id));
 }
 
