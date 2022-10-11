@@ -1,14 +1,15 @@
 #include <thread>
 #include <queue>
+#include <chrono>
 
 #include "../common/matrix.hpp"
 #include "../common/matrix_generation.hpp"
 #include "../common/matrix_write.hpp"
-#include "../common/semaphore.hpp"
 #include "../common/lock_free_queue.hpp"
 
-constexpr std::size_t N = 5;
-constexpr std::size_t M = 5;
+constexpr std::size_t N = 2000;
+constexpr std::size_t M = 2000;
+constexpr std::size_t total_iterations = 100;
 
 lock_free_queue<MatrixPtrPair> addition_queue;
 lock_free_queue<MatrixPtr> output_queue;
@@ -27,15 +28,16 @@ MatrixPtr MatrixAddition(const MatrixPtr& matrix1, const MatrixPtr& matrix2) {
 
 
 void ProducerThread() {
-    while (true) {
+    std::size_t iteration = 0;
+    while (iteration++ < total_iterations) {
         auto matrixes = GenerateMatrixPair(N, M);
-
         addition_queue.push(std::move(matrixes));
     }
 }
 
 void ConsumerThread() {
-    while (true) {
+    std::size_t iteration = 0;
+    while (iteration++ < total_iterations) {
         auto [matrix1, matrix2] = addition_queue.front();
         addition_queue.pop();
 
@@ -47,7 +49,8 @@ void ConsumerThread() {
 void WriterThread() {
     std::ofstream file("result.txt");
 
-    while (true) {
+    std::size_t iteration = 0;
+    while (iteration++ < total_iterations) {
         auto summed_matrix = output_queue.front();
         output_queue.pop();
 
