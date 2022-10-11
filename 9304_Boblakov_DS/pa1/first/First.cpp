@@ -101,7 +101,7 @@ void * read(Matrix & m1, Matrix & m2, int width, int height){
 void * write(Matrix & m, std::string & file_name){
 
     std::ofstream out;
-    out.open(file_name, std::fstream::in | std::fstream::out );
+    out.open(file_name, std::fstream::out );
 
     for (int i = 0; i < m.size(); ++i) {
         for (int j = 0; j < m[i].size(); ++j) {

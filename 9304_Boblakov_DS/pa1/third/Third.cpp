@@ -150,7 +150,7 @@ Matrix sumMatrixMulti(Matrix & res, Matrix & m1, Matrix & m2, int count_threads)
 void * write(Matrix & m, std::string & file_name){
 
     std::ofstream out;
-    out.open(file_name, std::fstream::in | std::fstream::out);
+    out.open(file_name, std::fstream::out );
 
     for (int i = 0; i < m.size(); ++i) {
         for (int j = 0; j < m[i].size(); ++j) {
@@ -166,7 +166,7 @@ int main(){
 
     int m_width = 15;
     int m_height = 15;
-    int threads_counter = 200;
+    int threads_counter = 4;
 
     std::string file_name = "m3.txt";
 
