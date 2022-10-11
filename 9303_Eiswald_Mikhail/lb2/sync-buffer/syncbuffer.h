@@ -18,8 +18,6 @@ public:
     SyncBuffer(size_t size = 10);
     void push(const Matrix& matrix);
     Matrix pop();
-    bool is_empty();
-    bool is_full();
 };
 
 #endif // SYNCBUFFER_H

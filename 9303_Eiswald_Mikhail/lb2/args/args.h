@@ -6,6 +6,6 @@
 
 using namespace std;
 
-void parse_args(int c, char** v, int* params, int params_len);
+void parse_args(int c, char** v, int* params, int params_len, const char* warn_template);
 
 #endif // ARGS_H

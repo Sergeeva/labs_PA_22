@@ -1,6 +1,7 @@
 #include "args.h"
 
-void parse_args(int c, char** v, int* params, int params_len) {
+void parse_args(int c, char** v, int* params, int params_len,
+                const char* warn_template) {
     for(int i = 1; i < min(c,params_len+1); ++i) {
         int val = atoi(v[i]);
         if(val < 1) {
@@ -15,14 +16,10 @@ void parse_args(int c, char** v, int* params, int params_len) {
     }
     if(c < params_len+1) {
        puts("Info: not enough arguments. Using default values.");
-       printf("Usage: %s <number of rows> <number of columns>"
-               " <max element value> [<threads_count> if applicable]\n",
-               v[0]);
+       printf(warn_template, v[0]);
     }
     if(c > params_len+1) {
         puts("Warning: extra arguments ignored.");
-        printf("Usage: %s <number of rows> <number of columns>"
-                   " <max element value> [<threads_count> if applicable]\n",
-                   v[0]);
+        printf(warn_template, v[0]);
     }
 }
