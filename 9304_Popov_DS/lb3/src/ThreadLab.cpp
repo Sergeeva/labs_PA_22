@@ -7,7 +7,7 @@
 #define ROW 10
 #define COL 10
 
-#define DURATION_TIME
+#undef DURATION_TIME
 
 #ifdef DURATION_TIME
 #include <chrono>
@@ -52,7 +52,7 @@ void startLab(const labStruct::uint& count)
 
 
 
-void generateMatrix(labStruct::CustomQueue* const queue, const labStruct::uint& count)
+void generateMatrix(labStruct::CustomQueue* const matrixsQueue, const labStruct::uint& count)
 {
     labStruct::uint generateCount = 0;
 
@@ -66,7 +66,7 @@ void generateMatrix(labStruct::CustomQueue* const queue, const labStruct::uint& 
             matrix->secondMatrix[i] = 2; //labStruct::random::getRandomNumber();
         }
 
-        queue->push(matrix);
+        matrixsQueue->push(matrix);
 
         ++generateCount;
     }
@@ -93,14 +93,14 @@ void sumMatrix(labStruct::CustomQueue* const matrixsQueue, labStruct::CustomQueu
 
 
 
-void resultMatrix(labStruct::CustomQueue* const queue, const labStruct::uint& count)
+void resultMatrix(labStruct::CustomQueue* const resultQueue, const labStruct::uint& count)
 {
     labStruct::uint outputCount = 0;
     std::ofstream resultFile("./result.txt");
 
     while (outputCount != count)
     {
-        auto result = queue->pop();
+        auto result = resultQueue->pop();
 
         if (resultFile)
         {

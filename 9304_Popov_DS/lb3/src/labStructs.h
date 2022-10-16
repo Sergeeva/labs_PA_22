@@ -4,7 +4,6 @@
 #include <random>
 #include <cstdint>
 #include <atomic>
-#include <memory>
 
 #include <iostream>
 
@@ -29,7 +28,7 @@ public:
 };
 
 
-// template <class T>
+
 class CustomQueue 
 {
 public:
@@ -55,7 +54,6 @@ public:
             }
             else
                 tail.compare_exchange_weak(oldTail, oldTail->next);
-
         }   
     }
 
@@ -70,7 +68,7 @@ public:
             if (oldHead == oldTail)
             {
                 if (nextHead == nullptr)
-                    throw std::out_of_range("Queue is empty!\n");
+                    continue;
                 else
                     tail.compare_exchange_weak(oldTail, nextHead);
             }
@@ -92,8 +90,8 @@ private:
         Matrix* _data;
         std::atomic<Node*> next;
     };
-    std::atomic<Node*> head {nullptr};
-    std::atomic<Node*> tail {nullptr};
+    std::atomic<Node*> head;
+    std::atomic<Node*> tail;
 };
 
 

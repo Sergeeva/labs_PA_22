@@ -1,9 +1,9 @@
 CC 		= g++
 CFLAGS  = -c -Wall -g -std=c++17
 LDFLAGS = -pthread
-SOURCES = main.cpp  ThreadLab.cpp
+SOURCES = main.cpp ThreadLab.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
-TARGET  = lab1
+TARGET  = lab3
 
 
 .PHONY: all clean
