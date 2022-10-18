@@ -41,16 +41,15 @@ void multiThreadsAddition(vector<vector<int>> &firstMatrix, vector<vector<int>> 
             vecOfThreads[i].join();
         }
 
-
         auto stop = high_resolution_clock::now();
 
         auto duration = duration_cast<microseconds>(stop - start);
 
-//        thread writerThread(writeToFile, "threads" + to_string(countOfThreads), ref(additionMatrix),
-//                            "Time taken by function: "+ to_string(duration.count()) + " microseconds" );
-        //writerThread.join();
+        thread writerThread(writeToFile, "threads" + to_string(countOfThreads), ref(additionMatrix),
+                            "Time taken by function: "+ to_string(duration.count()) + " microseconds" );
+        writerThread.join();
 
-        cout << "Time taken by function: "+ to_string(duration.count()) + " microseconds" << endl;
+        //cout << "Time taken by function: "+ to_string(duration.count()) + " microseconds" << endl;
     }
 }
 
