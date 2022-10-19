@@ -1,36 +1,49 @@
 #include "task.h"
 
 int main() {
-    int iterations = 1000;
-    std::cout << "Enter iterations count\n";
-    std::cin >> iterations;
+    int iterationsCount = 1000;
+    std::cout << "Enter iterationsCount count\n";
+    std::cin >> iterationsCount;
+
+    int threadsCount = 10;
+    std::cout << "Enter producers / consumers count\n";
+    std::cin >> threadsCount;
+
+    auto start = std::chrono::steady_clock::now();
 
     BlockingStack<Matrix> sourceStack;
     BlockingStack<Matrix> resultStack;
 
-    std::thread consumer1{popAndSumAndPushResult, std::ref(sourceStack), std::ref(resultStack), iterations};
-    std::thread consumer3{popAndSumAndPushResult, std::ref(sourceStack), std::ref(resultStack), iterations};
-    std::thread consumer2{popAndSumAndPushResult, std::ref(sourceStack), std::ref(resultStack), iterations};
+    std::vector<std::thread> consumers;
+    for (int i = 0; i < threadsCount; ++i) {
+        std::thread consumer{popAndSumAndPushResult, std::ref(sourceStack), std::ref(resultStack), iterationsCount};
+        consumers.emplace_back(std::move(consumer));
+    }
 
-    std::thread producer1{pushMatrix, std::ref(sourceStack), iterations};
-    std::thread producer2{pushMatrix, std::ref(sourceStack), iterations};
-    std::thread producer3{pushMatrix, std::ref(sourceStack), iterations};
+    std::vector<std::thread> producers;
+    for (int i = 0; i < threadsCount; ++i) {
+        std::thread producer{pushMatrix, std::ref(sourceStack), iterationsCount};
+        producers.emplace_back(std::move(producer));
+    }
 
-    std::thread writer{popAndWrite, std::ref(resultStack), iterations * 3};
+    std::thread writer{popAndWrite, std::ref(resultStack), iterationsCount * threadsCount};
 
-    log("All threads started");
+    log("All threadsCount started");
 
-    consumer1.join();
-    consumer2.join();
-    consumer3.join();
+    for (auto &thread: consumers) {
+        thread.join();
+    }
 
-    producer1.join();
-    producer2.join();
-    producer3.join();
+    for (auto &thread: producers) {
+        thread.join();
+    }
 
     writer.join();
 
-    log("All threads finished");
+    log("All threadsCount finished");
+
+    auto end = std::chrono::steady_clock::now();
+    log("Duration: " + std::to_string(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()));
 
     return 0;
 }
@@ -47,8 +60,8 @@ void popAndSumAndPushResult(BlockingStack<Matrix> &stack, BlockingStack<Matrix> 
 
 void pushMatrix(BlockingStack<Matrix> &stack, int iterations) {
     for (int i = 0; i < iterations; i++) {
-        stack.push(Matrix::randomMatrix(20, 100, 1000));
-        stack.push(Matrix::randomMatrix(20, 100, 1000));
+        stack.push(Matrix::randomMatrix(100, 100, 1000));
+        stack.push(Matrix::randomMatrix(100, 100, 1000));
     }
 
     log("Finish generating");
