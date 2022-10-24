@@ -3,7 +3,6 @@
 #include <vector>
 #include <random>
 #include <cstdint>
-#include <atomic>
 
 #include <iostream>
 #include <memory>
@@ -14,20 +13,15 @@ namespace labStruct
 {
     using uint32 = uint32_t;
 
-
-
-    template<typename T = uint32>
     class Matrix
     {
-        using col = std::vector<T>;
+        using col = std::vector<uint32>;
         using row = std::vector<col>;
     public:
         explicit Matrix(const uint32& rowSize, const uint32& colSize) :
         _rowSize(rowSize),
         _colSize(colSize)
         {
-            assert(_rowSize > 0 && _colSize > 0);
-
             _data.resize(rowSize);
 
             for (auto& c : _data)
@@ -41,34 +35,55 @@ namespace labStruct
 
 
 
-    template<typename T>
     class Cube
     {
-        using matrixPtr = std::shared_ptr<Matrix<T>>;
+        using matrixPtr = std::shared_ptr<Matrix>;
     public:
-        explicit Cube(matrixPtr firstMatrix, matrixPtr secondMatrix) :
+        explicit Cube(const matrixPtr& firstMatrix, const matrixPtr& secondMatrix) :
         _first(firstMatrix),
         _second(secondMatrix)
         {
-            assert(_first->_colSize == _second->_rowSize && 
-                   _second->_colSize == _first->_rowSize);
+            _result = std::make_shared<Matrix>(Matrix(_first->_rowSize, _second->_colSize));
 
-            _result = std::make_shared<Matrix<T>>(Matrix(_first->_rowSize, _second->_colSize));
+            for (const auto& r : firstMatrix->_data)
+            {
+                for (const auto& e : r)
+                    std::cout << e << ' ';
+                std::cout << '\n';
+            }
+            std::cout << '\n';
+
+            for (const auto& r : secondMatrix->_data)
+            {
+                for (const auto& e : r)
+                    std::cout << e << ' ';
+                std::cout << '\n';
+            }
+            std::cout << '\n';
         }
 
         matrixPtr _first;
         matrixPtr _second;
         matrixPtr _result;
 
-    private:
+        void result() const
+        {
+            for (const auto& r : _result->_data)
+            {
+                for (const auto& e : r)
+                    std::cout << e << ' ';
+                std::cout << '\n';
+            }
+            std::cout << '\n';
+        }
     };
 
 
-    template<typename T>
-    void generateMatrixData(Matrix<T>* ptr)
+
+    void generateMatrixData(Matrix* const ptr)
     {
         for (auto& col : ptr->_data)
             for (auto&  element : col)
-                element = 1;
+                element = std::rand() % 10 + 1;
     }
 }
