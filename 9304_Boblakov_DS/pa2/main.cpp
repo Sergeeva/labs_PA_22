@@ -19,7 +19,7 @@ std::vector<Matrix> buf2;
 const int buf_size = 5;
 const int m_width = 15;
 const int m_height = 15;
-const int counter_of_threads_triplet = 1500;
+const int counter_of_threads_triplet = 5;
 
 Matrix sum(std::pair<Matrix, Matrix> &matricesForSum) {
     Matrix m1 = matricesForSum.first;
@@ -48,9 +48,10 @@ void consume_m2() {
     buf2.pop_back();
 
     printMatrix(res_m);
+    buf2_is_full.notify_one();
     ul.unlock();
 
-    buf2_is_full.notify_one();
+
 }
 
 void produce_m2(std::pair<Matrix, Matrix> &matricesForSum) {
@@ -63,10 +64,10 @@ void produce_m2(std::pair<Matrix, Matrix> &matricesForSum) {
     });
 
     buf2.push_back(res_m);
-
+    buf2_is_empty.notify_one();
     ul.unlock();
 
-    buf2_is_empty.notify_one();
+
 }
 
 void consume_m1() {
