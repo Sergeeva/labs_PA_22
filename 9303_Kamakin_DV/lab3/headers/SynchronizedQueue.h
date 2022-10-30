@@ -43,11 +43,11 @@ public:
             old_tail = tail.load();
         }
 
-        if (head.compare_exchange_weak(null, new_node)) {
+        if (head.compare_exchange_strong(null, new_node)) {
             Log::info("Replaced null head to the tail");
         }
 
-        if (tail.compare_exchange_weak(old_tail, new_node)) {
+        if (tail.compare_exchange_strong(old_tail, new_node)) {
             Log::info("Tail updated");
         }
     }
