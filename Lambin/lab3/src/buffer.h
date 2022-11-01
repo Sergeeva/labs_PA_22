@@ -28,7 +28,6 @@ void Buffer<T>::push(T data) {
     newNode->next = top;
 
     while (!std::atomic_compare_exchange_weak(&top, &curNode, newNode)) {
-        curNode = top;
         newNode->next = top;
     }
 }

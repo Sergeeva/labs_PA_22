@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include <random>
 #include <thread>
+#include <mutex>
 
 using Type = int;
 using Matrix = std::vector<std::vector<Type>>;

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 
 def run(program_name_1, program_name_2):
-    amount = [i for i in range(10, 501, 5)]
+    amount = [i for i in range(10, 201, 5)]
     seconds_1 = []
     seconds_2 = []
     for matrix_amount in amount:
