@@ -1,5 +1,6 @@
 #include <vector>
 #include "./matrixFunc.h"
+#include <iostream>
 
 using namespace std;
 
