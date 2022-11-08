@@ -11,19 +11,17 @@ Buffer::Buffer(){
 }
 
 void Buffer::produce(Matrix matrix){
-    while(true){
-        std::shared_ptr<Node> node = this->head_;
-        std::shared_ptr<Node> newHead = std::make_shared<Node>(Node(std::make_shared<Matrix>(matrix)));
+    std::shared_ptr<Node> node = this->head_;
+    std::shared_ptr<Node> newHead = std::make_shared<Node>(Node(std::make_shared<Matrix>(matrix)));
+    do {
         newHead->next = node;
-        if (std::atomic_compare_exchange_weak(&this->head_, &node, newHead))
-            break;
-    }
+    } while (!std::atomic_compare_exchange_weak(&this->head_, &node, newHead));
+
 }
 
 std::shared_ptr<Matrix> Buffer::consume(){
-    while(true){
-        std::shared_ptr<Node> node = this->head_;
-        if (node) if (std::atomic_compare_exchange_weak(&this->head_, &node, node->next))
-            return node->matrix;
-    }
+    std::shared_ptr<Node> node = this->head_;
+    while (!(node && std::atomic_compare_exchange_weak(&this->head_, &node, node->next)))
+        node = this->head_;
+    return node->matrix;
 }
