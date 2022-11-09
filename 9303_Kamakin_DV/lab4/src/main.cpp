@@ -3,7 +3,7 @@
 #include "../headers/Configurator.h"
 
 int main() {
-//    Configurator().run();
+    Configurator().run();
     Starter(Configuration::get()).run();
     return 0;
 }
