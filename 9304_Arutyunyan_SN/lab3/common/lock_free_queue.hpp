@@ -90,44 +90,52 @@
 
 template <typename T>
 struct node {
+    node() = default;
     node(T value) : value(std::move(value)) {}
 
-    T value;
+    T value{};
     std::shared_ptr<node> next = nullptr;
 };
 
 template <typename T>
 class lock_free_queue {
 public:
+    lock_free_queue() {
+        head = std::make_shared<node<T>>();
+        tail = head;
+    }
+
     void push(T value) {
         auto new_node = std::make_shared<node<T>>(std::move(value));
+        auto last = head;
 
-        // если можно сделать set без лишних переменных, то выглядеть будет красивее
-        std::shared_ptr<node<T>> first = nullptr;
-        std::shared_ptr<node<T>> last = nullptr;
-        // а) если список пустой, то head нужно установить на node б) если список непустой, то head не трогаем
-        std::atomic_compare_exchange_weak(&head, &first, new_node);
-
-        // переводим указатель на хвост в актуальное состояние
         while (!std::atomic_compare_exchange_weak(&tail, &last, new_node));
-        // на этом этапе last - предыдущий от последнего, node - последний для текущего треда
-        if (last) last->next = new_node;
+
+        last->next = new_node;
         ++_size;
     }
 
     T front() const {
-        auto first = head;
-        while (!head || std::atomic_exchange(&first, head) != first) {}
+        auto first = head->next;
+        auto head_next = head->next;
+        while (!head_next || !std::atomic_compare_exchange_weak(&head_next, &first, first)) {
+            head_next = head->next;
+        }
         return first->value;
     }
 
     void pop() {
-        auto first = head;
-        auto head_next = (first == nullptr) ? nullptr : first->next;
-        // если head == first, то переводим head на следующий элемент. иначе first указывает на актуальную версию head
-        while (!head || !std::atomic_compare_exchange_weak(&head, &first, head_next)) {
-            head_next = (first == nullptr) ? nullptr : first->next;
-        }
+        auto dummy_next = head->next;
+        std::shared_ptr<node<T>> sub = nullptr;
+
+        // активно ожидаем
+        while (std::atomic_compare_exchange_weak(&dummy_next, &sub, head->next));
+
+        // здесь dummy_next указывает на первый настоящий элемент, и при этом он не nullptr
+        auto prev_last_node = dummy_next->next;
+        std::atomic_store(&head->next, prev_last_node);
+        // если prev_last_node == nullptr, то tail нужно сдвинуть на head
+        std::atomic_compare_exchange_weak(&tail, &dummy_next, head);
 
         --_size;
     }
@@ -135,7 +143,7 @@ public:
     auto size() const { return _size.load(); }
 
     void print() const {
-        auto current = head;
+        auto current = head->next;
         while (current) {
             std::cout << current->value << " ";
             current = current->next;
@@ -143,7 +151,7 @@ public:
         std::cout << "\n";
     }
 
-    std::shared_ptr<node<T>> head = nullptr;
-    std::shared_ptr<node<T>> tail = nullptr;
+    std::shared_ptr<node<T>> head;
+    std::shared_ptr<node<T>> tail;
     std::atomic<int> _size{0};
 };
