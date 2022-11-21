@@ -1,0 +1,5 @@
+build-*/
+lb?/*.pro*
+lb?/report/*
+!lb?/report/report.pdf
+lb?/*.out
