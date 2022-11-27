@@ -6,8 +6,7 @@ const int Config::C = 3;
 const int Config::generation_ceiling = 101;
 
 const std::string Config::Data_path = "../data/";
-const std::string Config::supply = "/A and B";
-const std::string Config::summed = "/A + B";
+const std::string Config::summed = "A+B";
 
 const int Config::min_threads = 1;
 const int Config::max_threads = 40;

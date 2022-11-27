@@ -14,7 +14,6 @@ public:
 
     // file handler
     static const std::string Data_path;
-    static const std::string supply;
     static const std::string summed;
 
     //Threads
