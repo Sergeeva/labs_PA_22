@@ -16,6 +16,7 @@ Matrix::Matrix(const Matrix &other) {
     this->columns = other.columns;
 
     this->matrix = other.matrix;
+    this->id = other.id;
 }
 
 int Matrix::get_rows() const {
@@ -56,6 +57,17 @@ Matrix Matrix::operator+(const Matrix& other) const {
     }
 
     throw std::invalid_argument("matrices dimensions do not match!");
+}
+
+Matrix& Matrix::operator=(Matrix other) {
+    std::swap(this->rows, other.rows);
+    std::swap(this->columns, other.columns);
+
+    std::swap(this->matrix, other.matrix);
+//    std::swap(this->id, other.id);
+    this->id = other.id;
+
+    return *this;
 }
 
 std::vector<int>& Matrix::operator[](int row)
@@ -119,4 +131,13 @@ void Matrix::set_id(size_t value) {
 
 size_t Matrix::get_id() const {
     return this->id;
+}
+
+Matrix &Matrix::operator=(Matrix &&other) {
+    this->rows = std::move(other.rows);
+    this->columns = std::move(other.columns);
+    this->matrix = std::move(other.matrix);
+    this->id = std::move(other.id);
+
+    return *this;
 }

@@ -13,7 +13,7 @@ class Matrix {
 
     std::vector<std::vector<int>> matrix;
 
-    size_t id;
+    size_t id = 1;
 
 public:
 
@@ -38,6 +38,10 @@ public:
     bool check_dimensions(const Matrix& other) const;
 
     Matrix operator+(const Matrix& other) const;
+
+    Matrix& operator=(Matrix other);
+
+    Matrix& operator=(Matrix&& other);
 
     static void partial_sum(const Matrix &first, const Matrix &second, int start, int length, Matrix& result);
 
