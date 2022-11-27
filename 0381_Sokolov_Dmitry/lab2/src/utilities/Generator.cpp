@@ -2,10 +2,6 @@
 
 Generator::Generator(int ceiling) : ceiling(ceiling) {}
 
-//void Generator::change_ceiling(int value) {
-//    this->ceiling = value;
-//}
-
 std::vector<std::vector<int>> Generator::generate(int rows, int columns, unsigned int seed) const {
 
     std::vector<std::vector<int>> values;
