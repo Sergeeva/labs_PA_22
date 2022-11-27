@@ -41,25 +41,15 @@ Matrix MatrixHandler::parallel_sum(Matrix &A, Matrix &B, int thread_number) {
 
 void MatrixHandler::output(Matrix& matrix, const std::string path, const std::string& name) {
 
-    std::condition_variable out;
-
-    std::mutex mutex;
-    std::unique_lock<std::mutex> lock (mutex);
-
-    out.wait(lock, [&]() -> bool {
-        return true;
-    });
-
-    std::string file_path = Config::Data_path + path + name + ".txt";
-//    std::cout << file_path << std::endl;
+    std::string file_path = path + std::to_string(matrix.get_id()) + ".txt";
 
     std::ofstream output;
-    output.open(path, std::ofstream::out | std::ofstream::trunc);
+    output.open(file_path, std::ofstream::app);
 
     if (!output.is_open()) {
         try {
-            std::filesystem::create_directory(path);
-            output.open(file_path, std::ofstream::out | std::ofstream::trunc);
+            std::filesystem::create_directories(path);
+            output.open(file_path, std::ofstream::out);
         }
         catch (...)
         {
@@ -67,9 +57,8 @@ void MatrixHandler::output(Matrix& matrix, const std::string path, const std::st
         }
     }
 
+    output << name << ":\n";
     output << matrix;
+    output << "\n";
     output.close();
-
-    out.notify_one();
-    lock.unlock();
 }
