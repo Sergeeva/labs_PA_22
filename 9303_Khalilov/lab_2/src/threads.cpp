@@ -2,28 +2,25 @@
 #include <thread>
 using namespace std;
 
-void generate(SafeQueue<MATRIX::Matrix<int>> &_queue, int count, int n, int m)
+void generate( SafeQueue<std::pair<MATRIX::Matrix<int>, MATRIX::Matrix<int>>> &_queue, int count, int n, int m)
 {
 
     for (size_t i = 0; i < count; i++)
     {
-        MATRIX::Matrix<int> matrix = MATRIX::generate(n, m);
-        _queue.push(matrix, "FILL");
+        auto pair_mat = make_pair(MATRIX::generate(n, m), MATRIX::generate(n, m));
+        _queue.push(pair_mat, "FILL");
     }
 }
 
 void mat_sum(
-    SafeQueue<MATRIX::Matrix<int>> &first_operands_queue,
-    SafeQueue<MATRIX::Matrix<int>> &second_operands_queue,
+    SafeQueue<std::pair<MATRIX::Matrix<int>, MATRIX::Matrix<int>>> &operands_queue,
     SafeQueue<MATRIX::Matrix<int>> &results_queue,
     int count)
 {
     for (size_t i = 0; i < count; i++)
     {
-        auto first_operand = first_operands_queue.pop("SUM");
-        auto second_operand = second_operands_queue.pop("SUM");
-        auto result = first_operand + second_operand;
-
+        auto operand = operands_queue.pop("SUM");
+        auto result = operand.first + operand.second;
         results_queue.push(result, "SUM");
     }
 }
@@ -41,14 +38,14 @@ void write(SafeQueue<MATRIX::Matrix<int>> &results_queue, int count)
 int main(int argc, const char **argv)
 {
 
-    SafeQueue<MATRIX::Matrix<int>> first_operands_queue("A_operands", 10), second_operands_queue("B_operands", 10), results_queue("results", 10);
+    SafeQueue<std::pair<MATRIX::Matrix<int>, MATRIX::Matrix<int>>> operands_queue("operands", 10); 
+    SafeQueue<MATRIX::Matrix<int>> results_queue("results", 10);
 
     int count = 20, n = 10, m = 10;
 
     std::vector<thread> threads;
-    threads.push_back(thread(generate, std::ref(first_operands_queue), count, n, m));
-    threads.push_back(thread(generate, std::ref(second_operands_queue), count, n, m));
-    threads.push_back(thread(mat_sum, std::ref(first_operands_queue), std::ref(second_operands_queue), std::ref(results_queue), count));
+    threads.push_back(thread(generate, std::ref(operands_queue), count, n, m));
+    threads.push_back(thread(mat_sum, std::ref(operands_queue), std::ref(results_queue), count));
     threads.push_back(thread(write, std::ref(results_queue), count));
 
     for (auto &_thread : threads)
