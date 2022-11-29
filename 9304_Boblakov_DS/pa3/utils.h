@@ -48,35 +48,33 @@ struct Node {
 
 };
 
-class CustomQueue {
+class CustomStack {
 
     std::shared_ptr<Node> head{};
 
 public:
-    Matrix pop() {
-        std::shared_ptr<Node> first{};
-
-        first = head;
-
-        while (!first || !std::atomic_compare_exchange_weak(&head, &first, first->next)){
-            first = head;
-        }
-
-        return first->data;
-    }
 
     void push(const Matrix &data) {
         auto newNode = std::make_shared<Node>(data);
 
         std::shared_ptr<Node> first{};
-
-        first = head;
-        newNode->next = first;
-
-        while (!std::atomic_compare_exchange_weak(&head, &first, newNode)){
+        do {
             first = head;
             newNode->next = first;
         }
+
+        while (!std::atomic_compare_exchange_weak(&head, &first, newNode));
+    }
+
+    Matrix pop() {
+        std::shared_ptr<Node> first{};
+
+        do{
+            first = head;
+        }
+        while (!first || !std::atomic_compare_exchange_weak(&head, &first, first->next));
+
+        return first->data;
     }
 };
 

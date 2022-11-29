@@ -11,15 +11,10 @@ std::condition_variable buf2_is_full, buf2_is_empty;
 std::vector<std::pair<Matrix, Matrix>> buf1;
 std::vector<Matrix> buf2;
 
-//int counter_p1 = 5;
-//int counter_p2 = 5;
-//int counter_c1 = 5;
-//int counter_c2 = 5;*
-
 const int buf_size = 5;
-const int m_width = 15;
-const int m_height = 15;
-const int counter_of_threads_triplet = 5;
+const int m_width = 1000;
+const int m_height = 1000;
+const int counter_of_threads_triplet =4;
 
 Matrix sum(std::pair<Matrix, Matrix> &matricesForSum) {
     Matrix m1 = matricesForSum.first;
@@ -116,7 +111,7 @@ int main() {
     buf2.reserve(buf_size);
     std::vector<std::thread> threads;
     threads.reserve(counter_of_threads_triplet * 3);
-
+    auto start = std::chrono::steady_clock::now();
     for (int i = 0; i < counter_of_threads_triplet; i++) {
 
         std::thread producerThread(produce_m1);
@@ -132,6 +127,11 @@ int main() {
     for (auto &thread: threads) {
         thread.join();
     }
+    auto end = std::chrono::steady_clock::now();
+
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+    std::cout << "Elapsed time: " << (double) duration.count() / 1000000 << "\n";
 
     return 0;
 }

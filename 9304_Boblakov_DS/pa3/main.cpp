@@ -5,8 +5,15 @@
 
 typedef std::vector<std::vector<int>> Matrix;
 
-const int m_width = 15;
-const int m_height = 15;
+const int m_width = 1000;
+const int m_height = 1000;
+
+int count = 4;
+
+int consumer_threads = 4;
+int producer_threads = 4;
+
+int writer_threads = 1;
 
 
 Matrix sum(Matrix m1, Matrix m2) {
@@ -22,52 +29,53 @@ Matrix sum(Matrix m1, Matrix m2) {
     return res_m;
 }
 
-void sumM(CustomQueue &matrixQueue, CustomQueue &resultQueue, int count) {
+void generateM(CustomStack &matrixStorage, int count) {
     for (int i = 0; i < count; i++) {
-        Matrix matrix1 = matrixQueue.pop();
-        Matrix matrix2 = matrixQueue.pop();
-        resultQueue.push(sum(matrix1, matrix2));
+        matrixStorage.push(generateMatrix(m_width, m_height));
+        matrixStorage.push(generateMatrix(m_width, m_height));
     }
 }
 
-void generateM(CustomQueue &stack, int count) {
+void sumM(CustomStack &matrixStorage, CustomStack &resultStorage, int count) {
     for (int i = 0; i < count; i++) {
-        stack.push(generateMatrix(m_width, m_height));
-        stack.push(generateMatrix(m_width, m_height));
+        Matrix matrix1 = matrixStorage.pop();
+        Matrix matrix2 = matrixStorage.pop();
+        resultStorage.push(sum(matrix1, matrix2));
     }
 }
 
-void resM(CustomQueue &resultMatrix, int count) {
+void resM(CustomStack &resultStorage, int count) {
     for (int i = 0; i < count; i++) {
-        Matrix matrix = resultMatrix.pop();
+        Matrix matrix = resultStorage.pop();
         printMatrix(matrix);
     }
 }
 
 int main() {
-    CustomQueue matrixQueue;
-    CustomQueue resultQueue;
-
-    int count = 1000;
-    int consumer_threads = 10;
-    int producer_threads = 10;
+    CustomStack matrixStorage;
+    CustomStack resultStorage;
 
     auto start = std::chrono::steady_clock::now();
 
     std::vector<std::thread> consumers;
+    std::vector<std::thread> producers;
+    std::vector<std::thread> writers;
+
     for (int i = 0; i < consumer_threads; ++i) {
-        std::thread consumer{sumM, std::ref(matrixQueue), std::ref(resultQueue), count};
+        std::thread consumer{sumM, std::ref(matrixStorage), std::ref(resultStorage), count};
         consumers.push_back(std::move(consumer));
     }
 
-    std::vector<std::thread> producers;
     for (int i = 0; i < producer_threads; ++i) {
-        std::thread producer{generateM, std::ref(matrixQueue), count};
+        std::thread producer{generateM, std::ref(matrixStorage), count};
         producers.push_back(std::move(producer));
     }
 
-    std::thread writer{resM, std::ref(resultQueue), count * consumer_threads};
 
+    for (int i = 0; i < writer_threads; ++i) {
+        std::thread writer{resM, std::ref(resultStorage), count};
+        producers.push_back(std::move(writer));
+    }
     for (auto &thread: consumers) {
         thread.join();
     }
@@ -75,14 +83,13 @@ int main() {
     for (auto &thread: producers) {
         thread.join();
     }
-
-    writer.join();
+    for (auto &thread: writers) {
+        thread.join();
+    }
 
 
     auto end = std::chrono::steady_clock::now();
-
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
     std::cout << "Elapsed time: " << (double) duration.count() / 1000000 << "\n";
 
     return 0;
