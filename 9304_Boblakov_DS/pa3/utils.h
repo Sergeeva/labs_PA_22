@@ -44,7 +44,7 @@ struct Node {
     const Matrix data;
     std::shared_ptr<Node> next = nullptr;
 
-    explicit Node(Matrix value) : data(std::move(value)) {}
+    explicit Node(Matrix data) : data(std::move(data)) {}
 
 };
 
@@ -65,8 +65,8 @@ public:
         return first->data;
     }
 
-    void push(const Matrix &value) {
-        auto newNode = std::make_shared<Node>(value);
+    void push(const Matrix &data) {
+        auto newNode = std::make_shared<Node>(data);
 
         std::shared_ptr<Node> first{};
 
