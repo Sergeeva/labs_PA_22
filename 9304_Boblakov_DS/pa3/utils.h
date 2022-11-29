@@ -57,24 +57,24 @@ public:
     void push(const Matrix &data) {
         auto newNode = std::make_shared<Node>(data);
 
-        std::shared_ptr<Node> first{};
+        std::shared_ptr<Node> tmp{};
         do {
-            first = head;
-            newNode->next = first;
+            tmp = head;
+            newNode->next = tmp;
         }
 
-        while (!std::atomic_compare_exchange_weak(&head, &first, newNode));
+        while (!std::atomic_compare_exchange_weak(&head, &tmp, newNode));
     }
 
     Matrix pop() {
-        std::shared_ptr<Node> first{};
+        std::shared_ptr<Node> tmp{};
 
         do{
-            first = head;
+            tmp = head;
         }
-        while (!first || !std::atomic_compare_exchange_weak(&head, &first, first->next));
+        while (!tmp || !std::atomic_compare_exchange_weak(&head, &tmp, tmp->next));
 
-        return first->data;
+        return tmp->data;
     }
 };
 
