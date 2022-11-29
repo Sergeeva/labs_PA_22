@@ -66,7 +66,7 @@ int main() {
     std::thread init = std::thread(initialize, std::ref(ab), iter, Config::R, Config::C);
 
     std::thread sum = std::thread(sum_matrices, std::ref(ab), std::ref(res_buff),
-                                  iter, Config::execution_threads);
+                                  iter, Config::summator_threads);
 
     std::thread out = std::thread(output, std::ref(res_buff), iter);
 

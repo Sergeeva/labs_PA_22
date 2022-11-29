@@ -20,7 +20,7 @@ public:
     static const int min_threads;
     static const int max_threads;
 
-    static const int execution_threads;
+    static const int summator_threads;
     static const int iterations;
 
     //Buffer
