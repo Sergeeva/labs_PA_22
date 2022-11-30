@@ -7,7 +7,7 @@
 
 
 #define DURATION_TIME
-#undef SINGLETHREAD
+#define SINGLETHREAD
 #define MULTITHREAD
 #define STRASSEN
 
@@ -23,7 +23,7 @@ std::chrono::milliseconds duration;
 
 constexpr unsigned DEGREE = 10;
 constexpr unsigned SIDE = (1 << DEGREE);
-constexpr unsigned THREADS = 4;
+constexpr unsigned THREADS = 8;
 
 
 
@@ -40,7 +40,6 @@ void outputMatrix(const std::shared_ptr<labStruct::Matrix>& matrix);
 void startLab()
 {
     using namespace labStruct;
-
     auto firstM  = std::make_shared<Matrix>(Matrix(SIDE));
     auto secondM = std::make_shared<Matrix>(Matrix(SIDE));
 
@@ -51,8 +50,8 @@ void startLab()
 #ifdef DURATION_TIME
     begin = std::chrono::steady_clock::now();
 #endif
+
     matrixMultiplication(firstM, secondM);
-    //outputMatrix(matrixMultiplication(firstM, secondM));
 
 #ifdef DURATION_TIME
     end = std::chrono::steady_clock::now();
@@ -66,8 +65,7 @@ void startLab()
     begin = std::chrono::steady_clock::now();
 #endif
 
-    firstM * secondM;
-    //outputMatrix(firstM * secondM);
+    *firstM.get() * *secondM.get();
 
 #ifdef DURATION_TIME
     end = std::chrono::steady_clock::now();
@@ -83,7 +81,6 @@ void startLab()
 #endif
 
     matrixStrassenMultiplication(firstM, secondM);
-    //outputMatrix(matrixStrassenMultiplication(firstM, secondM));
 
 #ifdef DURATION_TIME
     end = std::chrono::steady_clock::now();
@@ -133,7 +130,6 @@ std::shared_ptr<labStruct::Matrix> matrixMultiplication(const std::shared_ptr<la
 }
 
 
-
 std::shared_ptr<labStruct::Matrix> matrixStrassenMultiplication(const std::shared_ptr<labStruct::Matrix>& firstMatrix,
                                                                 const std::shared_ptr<labStruct::Matrix>& secondMatrix)
 {
@@ -146,7 +142,6 @@ std::shared_ptr<labStruct::Matrix> matrixStrassenMultiplication(const std::share
                           Matrix& a22)
     {
         const uint sideSubMatrix = mainMatrix._side >> 1;
-
 
         for (uint32 i = 0; i < sideSubMatrix; ++i)
             for (uint32 j = 0; j < sideSubMatrix; ++j)
@@ -195,13 +190,15 @@ std::shared_ptr<labStruct::Matrix> matrixStrassenMultiplication(const std::share
 
     auto RL = [&splitMatrix, &collectMatrix](const Matrix& a,
                                              const Matrix& b,
-                                             uint32& side,
+                                             uint32 side,
                                              auto&& RL) -> Matrix
     {
         if (side <= 64)
             return a * b;
 
+
         side =  side >> 1;
+
         auto a11 = Matrix(side);
         auto a12 = Matrix(side);
         auto a21 = Matrix(side);
@@ -232,39 +229,56 @@ std::shared_ptr<labStruct::Matrix> matrixStrassenMultiplication(const std::share
     };
 
 
-    auto newSide = SIDE;
+    auto newSide = SIDE >> 1;
 
-    auto threadL = [&RL, &newSide](Matrix& first,
-                                   Matrix& second,
+    auto threadL = [&RL, &newSide](Matrix first,
+                                   Matrix second,
                                    Matrix& result)
     {
         result._data = RL(first, second, newSide, RL)._data;
     };
 
-    
+    auto a11 = Matrix(newSide);
+    auto a12 = Matrix(newSide);
+    auto a21 = Matrix(newSide);
+    auto a22 = Matrix(newSide);
 
-    // auto t11 = Matrix(newSide);
-    // auto t12 = Matrix(newSide);
-    // auto t13 = Matrix(newSide);
-    // auto t14 = Matrix(newSide);
+    auto b11 = Matrix(newSide);
+    auto b12 = Matrix(newSide);
+    auto b21 = Matrix(newSide);
+    auto b22 = Matrix(newSide);
 
-    // auto t21 = Matrix(newSide);
-    // auto t22 = Matrix(newSide);
-    // auto t23 = Matrix(newSide);
-    // auto t24 = Matrix(newSide);
+    splitMatrix(*firstMatrix.get(),  a11, a12, a21, a22);
+    splitMatrix(*secondMatrix.get(), b11, b12, b21, b22);
 
-    // splitMatrix(*firstMatrix.get(), t11, t12, t13, t14);
-    // splitMatrix(*secondMatrix.get(), t21, t22, t23, t24);
+    auto result1 = Matrix(newSide);
+    auto result2 = Matrix(newSide);
+    auto result3 = Matrix(newSide);
+    auto result4 = Matrix(newSide);
+    auto result5 = Matrix(newSide);
+    auto result6 = Matrix(newSide);
+    auto result7 = Matrix(newSide);
 
-    // auto result1 = Matrix(newSide);
-    // auto result2 = Matrix(newSide);
-    // auto result3 = Matrix(newSide);
-    // auto result4 = Matrix(newSide);
+    std::thread thread1 (threadL, a11 + a22, b11 + b22, std::ref(result1));
+    std::thread thread2 (threadL, a21 + a22, b11, std::ref(result2));
+    std::thread thread3 (threadL, a11, b12 - b22, std::ref(result3));
+    std::thread thread4 (threadL, a22, b21 - b11, std::ref(result4));
+    std::thread thread5 (threadL, a11 + a12, b22, std::ref(result5));
+    std::thread thread6 (threadL, a21 - a11, b11 + b12, std::ref(result6));
+    std::thread thread7 (threadL, a12 - a22, b21 + b22, std::ref(result7));
 
-    auto result = Matrix(firstMatrix->_side);
-    threadL(*firstMatrix.get(), *secondMatrix.get(), result);
+    thread1.join();
+    thread2.join();
+    thread3.join();
+    thread4.join();
+    thread5.join();
+    thread6.join();
+    thread7.join();
 
-    return std::make_shared<Matrix>(result);
+    return std::make_shared<Matrix>(collectMatrix(result1 + result4 - result5 + result7,
+                                                  result3 + result5,
+                                                  result2 + result4,
+                                                  result1 - result2 + result3 + result6));
 }
 
 
