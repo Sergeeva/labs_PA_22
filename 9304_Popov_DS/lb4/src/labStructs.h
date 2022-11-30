@@ -9,7 +9,6 @@ namespace labStruct
 {
     class Matrix;
     using uint32 = uint32_t;
-    using matrixPtr = std::shared_ptr<labStruct::Matrix>;
 
     class Matrix
     {
@@ -30,6 +29,12 @@ namespace labStruct
 
         friend Matrix operator*(const Matrix& left,
                                 const Matrix& right);
+
+        friend bool operator==(const Matrix& left,
+                                 const Matrix& right);
+
+        friend bool operator!=(const Matrix& left,
+                               const Matrix& right);
 
         const uint32 _side;
         row _data;
@@ -87,6 +92,25 @@ namespace labStruct
         return Matrix(0);
     }
 
+    bool operator==(const Matrix& left,
+                    const Matrix& right)
+    {
+        if (left._side != right._side)
+            return false;
+
+        for (uint32 i = 0; i < left._side; ++i)
+            for (uint32 j = 0; j < left._side; ++j)
+                if (left._data[i][j] != right._data[i][j])
+                    return false;
+        
+        return true;
+    }
+
+    bool operator!=(const Matrix& left,
+                    const Matrix& right)
+    {
+        return !(left == right);
+    }
 
 
     void generateMatrixData(Matrix* const ptr)

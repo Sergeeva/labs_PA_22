@@ -21,7 +21,7 @@ std::chrono::milliseconds duration;
 
 
 
-constexpr unsigned DEGREE = 10;
+constexpr unsigned DEGREE = 7;
 constexpr unsigned SIDE = (1 << DEGREE);
 constexpr unsigned THREADS = 8;
 
@@ -51,7 +51,7 @@ void startLab()
     begin = std::chrono::steady_clock::now();
 #endif
 
-    matrixMultiplication(firstM, secondM);
+    auto m = matrixMultiplication(firstM, secondM);
 
 #ifdef DURATION_TIME
     end = std::chrono::steady_clock::now();
@@ -80,7 +80,7 @@ void startLab()
     begin = std::chrono::steady_clock::now();
 #endif
 
-    matrixStrassenMultiplication(firstM, secondM);
+    auto s = matrixStrassenMultiplication(firstM, secondM);
 
 #ifdef DURATION_TIME
     end = std::chrono::steady_clock::now();
