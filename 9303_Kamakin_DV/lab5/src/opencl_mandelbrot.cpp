@@ -3,16 +3,15 @@
 #include "save_cl.h"
 #include "opencl_mandelbrot.h"
 #include "util.h"
-#include "svpng.h"
 
 #include <iostream>
 #include <stdexcept>
 #include <vector>
 
 cl_uint get_platforms_count() {
-    cl_uint platformsCount = 0;
-    CL_SAVE_EXECUTE(clGetPlatformIDs(0, nullptr, &platformsCount))
-    return platformsCount;
+    cl_uint platforms_count = 0;
+    CL_SAVE_EXECUTE(clGetPlatformIDs(0, nullptr, &platforms_count))
+    return platforms_count;
 }
 
 std::vector<cl_platform_id> get_platforms(cl_uint platforms_count) {
@@ -33,9 +32,9 @@ std::vector<unsigned char> get_device_name(cl_device_id device) {
 }
 
 cl_uint get_devices_count(cl_platform_id platform) {
-    cl_uint devicesCount = 0;
-    CL_SAVE_EXECUTE(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &devicesCount))
-    return devicesCount;
+    cl_uint devices_count = 0;
+    CL_SAVE_EXECUTE(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &devices_count))
+    return devices_count;
 }
 
 std::vector<cl_device_id> get_devices(cl_platform_id platform, cl_uint devices_count) {
@@ -45,30 +44,30 @@ std::vector<cl_device_id> get_devices(cl_platform_id platform, cl_uint devices_c
 }
 
 cl_device_id get_first_device(cl_platform_id platform) {
-    auto devicesCount = get_devices_count(platform);
+    auto devices_count = get_devices_count(platform);
 
-    if (devicesCount == 0) {
+    if (devices_count == 0) {
         throw std::runtime_error("OpenCL devices not found");
     }
 
-    return get_devices(platform, devicesCount)[0];
+    return get_devices(platform, devices_count)[0];
 }
 
 cl_device_id get_first_device() {
-    auto platformsCount = get_platforms_count();
+    auto platforms_count = get_platforms_count();
 
-    if (platformsCount == 0) {
+    if (platforms_count == 0) {
         throw std::runtime_error("OpenCL platforms not found");
     }
 
-    return get_first_device(get_platforms(platformsCount)[0]);
+    return get_first_device(get_platforms(platforms_count)[0]);
 }
 
 cl_program build(const cl_context context, const cl_device_id device, const std::string &source) {
     cl_int error;
-    auto sourceStr = source.c_str();
-    auto sourceLength = source.length();
-    cl_program program = clCreateProgramWithSource(context, 1, &sourceStr, &sourceLength, &error);
+    auto source_str = source.c_str();
+    auto source_length = source.length();
+    cl_program program = clCreateProgramWithSource(context, 1, &source_str, &source_length, &error);
     CL_CHECK_CODE(error)
 
     const char *options = "";

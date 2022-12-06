@@ -34,7 +34,7 @@ int main() {
 
     std::cout << "OpenCL duration: " << opencl_duration.count() << " microseconds" << std::endl;
 
-    auto serial_duration = output_mandelbrot(serial_mandelbrot, opencl_filename);
+    auto serial_duration = output_mandelbrot(serial_mandelbrot, serial_filename);
 
     std::cout << "Serial duration: " << serial_duration.count() << " microseconds" << std::endl;
 
