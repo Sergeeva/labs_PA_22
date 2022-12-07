@@ -43,10 +43,7 @@ void matrices_generate(Buffer<pair <Matrix, Matrix>>* matrix_buffer, int count_i
 
         res_matrix.close();
     
-        matrix_buffer->produce(make_pair(matrix1,matrix2));
-     
-
-        
+        matrix_buffer->produce(make_pair(matrix1,matrix2));        
         
     }
 }
@@ -54,13 +51,10 @@ void matrices_generate(Buffer<pair <Matrix, Matrix>>* matrix_buffer, int count_i
 void matrices_sum(Buffer<pair <Matrix, Matrix>>* matrix_buffer,  Buffer <Matrix>* result_buffer, int count_iterations, int rows, int columns, int count_threads)
 {
     
-    //count_iterations?
-
     for (int i = 0; i < count_iterations; i++)
     {
 
         pair <Matrix, Matrix> matrix_pair = *matrix_buffer->consume().get();
-
 
         Matrix matrix1 = matrix_pair.first;
         Matrix matrix2 = matrix_pair.second;
@@ -92,8 +86,6 @@ void write_result(Buffer<Matrix>* result_buffer, int count_iterations)
 
     }
 };
-
-
 
 
 int main(int argc, char *argv[]){
