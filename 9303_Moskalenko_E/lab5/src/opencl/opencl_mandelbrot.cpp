@@ -5,7 +5,6 @@
 #include "../svpng/svpng.h"
 
 #include <iostream>
-#include <stdexcept>
 #include <vector>
 
 #include <fstream>
@@ -107,7 +106,6 @@ cl_mem create_image(cl_context context, size_t height, size_t width) {
     auto cl_img = clCreateImage2D(context, CL_MEM_WRITE_ONLY,
                                                          &format, width, height, 0, nullptr, &error);
     CL_CHECK_CODE(error)
-
     return cl_img;
 }
 
