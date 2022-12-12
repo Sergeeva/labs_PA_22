@@ -14,7 +14,11 @@ class MatrixHandler {
 
     static void row_multiply(Matrix& A, Matrix& B, int current_row, int rows_to_iterate, Matrix& result);
 
+
+
 public:
+
+    static void strassen_compitable(Matrix& matrix);
 
     static Matrix create(int rows, int columns, unsigned int seed);
 

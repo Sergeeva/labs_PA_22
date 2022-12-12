@@ -102,6 +102,12 @@ Matrix MatrixHandler::parallel_mult(Matrix &A, Matrix &B, int thread_number) {
 
 }
 
+void MatrixHandler::strassen_compitable(Matrix &matrix) {
+    int new_size = std::pow(2, std::ceil(std::log2(std::max(matrix.get_rows(), matrix.get_columns()))));
+
+    matrix.resize(new_size, new_size);
+}
+
 void MatrixHandler::output(Matrix& matrix, const std::string& path, const std::string& name) {
 
     std::string file_path = path + std::to_string(matrix.get_id()) + ".txt";

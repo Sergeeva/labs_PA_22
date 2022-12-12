@@ -1,8 +1,8 @@
 #include "config.h"
 
 // Matrix dimensions
-const int  Config::R = 4;
-const int Config::C = 4;
+const int  Config::R = 7;
+const int Config::C = 5;
 
 // Defines the maximum number of digits of the matrix values
 const int Config::generation_ceiling = 10;
