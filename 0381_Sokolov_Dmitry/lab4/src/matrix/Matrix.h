@@ -16,6 +16,12 @@ class Matrix {
 
     size_t id = 1;
 
+protected:
+
+    bool check_square(int _rows, int _columns) const noexcept;
+
+    bool check_mult(int _rows) const noexcept;
+
 public:
 
     Matrix() = default;
@@ -38,9 +44,7 @@ public:
 
     bool check_dimensions(const Matrix& other, bool equality=true) const noexcept;
 
-    bool check_square(int rows, int columns) const noexcept;
-
-    bool check_mult(int rows) const noexcept;
+    void resize(int _rows, int _columns);
 
     Matrix operator+(const Matrix& other) const;
 
@@ -64,6 +68,8 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const Matrix& matrix);
 
     friend std::istream& operator>>(std::istream& in, Matrix& matrix);
+
+    friend bool operator==(const Matrix& that, const Matrix& other);
 
     ~Matrix() = default;
 

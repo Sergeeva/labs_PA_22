@@ -48,7 +48,7 @@ bool Matrix::check_dimensions(const Matrix& other, bool equality) const noexcept
 }
 
 bool Matrix::check_square(int _rows, int _columns) const noexcept {
-    if (this->columns != _rows or this->rows != _columns) {
+    if (this->rows != _rows or this->columns != _columns) {
         return false;
     }
 
@@ -61,6 +61,22 @@ bool Matrix::check_mult(int _rows) const noexcept {
     }
 
     return true;
+}
+
+void Matrix::resize(int _rows, int _columns) {
+
+    if (this->columns != _columns) {
+        this->columns = _columns;
+
+        for (unsigned int i = 0; i < this->rows; i++) {
+            this->matrix[i].resize(_columns, 0);
+        }
+    }
+
+    if (this->rows != _rows) {
+        this->rows = _rows;
+        this->matrix.resize(_rows, std::vector<int>(this->columns, 0));
+    }
 }
 
 Matrix Matrix::operator+(const Matrix& other) const {
@@ -180,3 +196,17 @@ void Matrix::set_id(size_t value) {
 size_t Matrix::get_id() const {
     return this->id;
 }
+
+bool operator==(const Matrix &that, const Matrix &other) {
+
+    if (!that.check_dimensions(other)) {
+        return false;
+    }
+
+    if (that.matrix != other.matrix) {
+        return false;
+    }
+
+    return true;
+}
+

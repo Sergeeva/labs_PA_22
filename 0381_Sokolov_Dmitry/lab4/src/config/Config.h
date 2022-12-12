@@ -20,13 +20,13 @@ public:
     //Threads
     static const int min_threads;
     static const int max_threads;
-
-    static const int summator_threads;
-    static const int iterations;
+    static const int execution_threads;
+    static const int recursion_limit;
 
     //Buffer
     static const int max_size;
     static const int threads;
+    static const int iterations;
 
     static void log_config();
 

@@ -1,22 +1,39 @@
 #include <iostream>
 #include "./matrix/MatrixHandler.h"
+#include "./utilities/session_timer.h"
 
 int main() {
-    Matrix A = MatrixHandler::create(4, 4, 228);
-    std::cout << A;
 
-    Matrix B = MatrixHandler::create(4, 4, 322);
-    std::cout << B;
+    SessionTimer tm = SessionTimer();
 
-    Matrix C = Matrix(4, 4);
+    Matrix A = MatrixHandler::create(Config::R, Config::C, 228);
+    MatrixHandler::output(A, Config::Data_path, "A");
 
-    for (int i = 0; i < A.get_rows(); i++) {
-        for (int j = 0; j < B.get_columns(); j++) {
-            Matrix::partial_mult(A, B, i, j, C);
-        }
-    }
+    Matrix B = MatrixHandler::create(Config::R, Config::C, 322);
+    MatrixHandler::output(B, Config::Data_path, "B");
 
-    std::cout << C;
+    //------------------------------------------------------------------------------------------------------------------
+
+    tm.start_session();
+    Matrix C = A * B;
+    tm.finish_session();
+
+    MatrixHandler::output(C, Config::Data_path, "Consecutive");
+
+    std::cout << "Consecutive finished within: " << std::to_string(tm.last()) << std::endl;
+
+    //------------------------------------------------------------------------------------------------------------------
+
+    tm.start_session();
+    Matrix D = MatrixHandler::parallel_mult(A, B, Config::execution_threads);
+    tm.finish_session();
+
+    MatrixHandler::output(D, Config::Data_path, "multiple threads");
+
+    std::cout << "Parallel finished within: " << std::to_string(tm.last()) << std::endl;
+
+    std::cout << "Results are equal: " << (C == D);
+
 
     return 0;
 }
