@@ -10,7 +10,6 @@
 #include <memory>
 
 
-
 using namespace std;
 
 namespace MATRIX
@@ -101,8 +100,8 @@ namespace MATRIX
         Matrix<T> operator+(Matrix<T> &matrix)
         {
 
-            int n = this->size().first;
-            int m = this->size().second;
+            int n = this->__size.first;
+            int m = this->__size.second;
 
             Matrix<T> res(n, m);
 

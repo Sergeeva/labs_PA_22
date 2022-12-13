@@ -8,6 +8,7 @@ void generate(LockFreeStack<pair<MATRIX::Matrix<int>, MATRIX::Matrix<int>>> &_qu
     cout << "gen\n";
     for (size_t i = 0; i < count; i++)
     {
+        cout << "GEN[" + to_string(i + 1) + "] ------- \n";
         pair<MATRIX::Matrix<int>, MATRIX::Matrix<int>> pair_mat = make_pair(MATRIX::generate(n, m), MATRIX::generate(n, m));
         _queue.push(move(pair_mat));
     }
@@ -21,20 +22,27 @@ void mat_sum(
     cout << "sum\n";
     for (size_t i = 0; i < count; i++)
     {
+        cout << "SUM[" + to_string(i + 1) + "] ------- \n";
         auto operands = operands_queue.pop();
-        auto result = operands->first + operands->second;
-        results_queue.push(move(result));
+        if (operands)
+        {
+            auto result = operands->first + operands->second;
+            results_queue.push(move(result));
+        }
     }
 }
 
 void write(LockFreeStack<MATRIX::Matrix<int>> &results_queue, int count)
 {
-    cout << "weite\n";
+    cout << "write\n";
     for (size_t i = 0; i < count; i++)
     {
         cout << "WRITE[" + to_string(i + 1) + "] ------- \n";
         auto result = results_queue.pop();
-        MATRIX::write(*result, "results/result__" + to_string(i + 1) + "__.txt");
+        if (result)
+        {
+            MATRIX::write(*result, "results/result__" + to_string(i + 1) + "__.txt");
+        }
     }
 }
 
@@ -67,6 +75,6 @@ int main(int argc, const char **argv)
 
     cout << "Time taken by function: "
          << duration.count() << " microseconds" << endl;
-         
+
     return 0;
 }
