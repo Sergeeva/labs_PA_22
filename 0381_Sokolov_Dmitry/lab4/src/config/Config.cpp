@@ -1,8 +1,8 @@
 #include "config.h"
 
 // Matrix dimensions
-const int  Config::R = 7;
-const int Config::C = 5;
+const int  Config::R = 9;
+const int Config::C = 9;
 
 // Defines the maximum number of digits of the matrix values
 const int Config::generation_ceiling = 10;
@@ -16,9 +16,10 @@ const int Config::min_threads = 1;
 const int Config::max_threads = 60;
 const int Config::execution_threads = 50;
 const int Config::recursion_limit = 200;
+const int Config::size_floor = 64;
 
 // Number of operations being performed on matrices
-const int Config::threads = 3;
+const int Config::threads = 8;
 const int Config::iterations = 50;
 
 // Buffer configuration

@@ -1,5 +1,9 @@
 #include "Matrix.h"
 
+Matrix::Matrix(int size): rows(size), columns(size) {
+    this->matrix = std::vector<std::vector<int>>(rows, std::vector<int>(columns, 0));
+}
+
 Matrix::Matrix(int _rows, int _columns): rows(_rows), columns(_columns) {
     this->matrix = std::vector<std::vector<int>>(rows, std::vector<int>(columns, 0));
 }
@@ -37,17 +41,29 @@ std::vector<int> Matrix::get_column(int _column) const {
     return col;
 }
 
+int Matrix::get_size() const {
+    return this->rows * this->columns;
+}
+
 bool Matrix::check_dimensions(const Matrix& other, bool equality) const noexcept
 {
 
     if (equality) {
-        return this->check_square(other.get_rows(), other.get_columns());
+        return this->check_sum(other.get_rows(), other.get_columns());
     }
 
     return this->check_mult(other.get_rows());
 }
 
-bool Matrix::check_square(int _rows, int _columns) const noexcept {
+bool Matrix::is_square() {
+    if (this->rows == this->columns) {
+        return true;
+    }
+
+    return false;
+}
+
+bool Matrix::check_sum(int _rows, int _columns) const noexcept {
     if (this->rows != _rows or this->columns != _columns) {
         return false;
     }
@@ -79,6 +95,24 @@ void Matrix::resize(int _rows, int _columns) {
     }
 }
 
+void Matrix::get_tile(Matrix& tile, int row_start, int column_start, int size) const {
+
+    for (int i = row_start; i < row_start + size; i++) {
+        for (int j = column_start; j < column_start + size; j++) {
+            tile[i - row_start][j - column_start] = this->matrix[i][j];
+        }
+    }
+}
+
+void Matrix::set_tile(Matrix &tile, int row_start, int column_start, int size) {
+    for (int i = row_start; i < row_start + size; i++) {
+        for (int j = column_start; j < column_start + size; j++) {
+            this->matrix[i][j] = tile[i - row_start][j - column_start];
+        }
+    }
+}
+
+
 Matrix Matrix::operator+(const Matrix& other) const {
 
     if (this->check_dimensions(other)) {
@@ -88,6 +122,23 @@ Matrix Matrix::operator+(const Matrix& other) const {
         for (int i = 0; i < result.get_rows(); i++) {
             for (int j = 0; j < result.get_columns(); j++) {
                 result[i][j] += other.get(i, j);
+            }
+        }
+
+        return result;
+    }
+
+    throw std::invalid_argument("matrices dimensions do not match!");
+}
+
+Matrix Matrix::operator-(const Matrix &other) const {
+    if (this->check_dimensions(other)) {
+
+        Matrix result = Matrix(*this);
+
+        for (int i = 0; i < result.get_rows(); i++) {
+            for (int j = 0; j < result.get_columns(); j++) {
+                result[i][j] -= other.get(i, j);
             }
         }
 
@@ -173,6 +224,17 @@ void Matrix::partial_sum(const Matrix &first, const Matrix &second, int start, i
     }
 }
 
+void Matrix::partial_sub(const Matrix &first, const Matrix &second, int start, int length, Matrix &result) {
+    int size = result.get_rows() * result.get_columns();
+
+    for (int i = start; i < start + length && i < size; ++i) {
+        int y = i / result.get_columns();
+        int x = i % result.get_columns();
+
+        result[y][x] = first.get(y, x) - second.get(y, x);
+    }
+}
+
 void Matrix::partial_mult(const Matrix &first, const Matrix &second,
                           int _row, int _column, Matrix& result) {
 
@@ -209,4 +271,3 @@ bool operator==(const Matrix &that, const Matrix &other) {
 
     return true;
 }
-

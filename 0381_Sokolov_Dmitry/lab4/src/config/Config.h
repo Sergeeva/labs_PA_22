@@ -22,6 +22,7 @@ public:
     static const int max_threads;
     static const int execution_threads;
     static const int recursion_limit;
+    static const int size_floor;
 
     //Buffer
     static const int max_size;

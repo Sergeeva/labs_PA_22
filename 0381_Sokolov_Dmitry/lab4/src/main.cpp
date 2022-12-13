@@ -1,44 +1,24 @@
 #include <iostream>
-#include "./matrix/MatrixHandler.h"
+//#include "./matrix/MatrixHandler.h"
+#include "./matrix/multiplication/Strassen.h"
 #include "./utilities/session_timer.h"
 
 int main() {
 
-//    SessionTimer tm = SessionTimer();
-//
-//    Matrix A = MatrixHandler::create(Config::R, Config::C, 228);
-//    MatrixHandler::output(A, Config::Data_path, "A");
-//
-//    Matrix B = MatrixHandler::create(Config::R, Config::C, 322);
-//    MatrixHandler::output(B, Config::Data_path, "B");
-//
-//    //------------------------------------------------------------------------------------------------------------------
-//
-//    tm.start_session();
-//    Matrix C = A * B;
-//    tm.finish_session();
-//
-//    MatrixHandler::output(C, Config::Data_path, "Consecutive");
-//
-//    std::cout << "Consecutive finished within: " << std::to_string(tm.last()) << std::endl;
-//
-//    //------------------------------------------------------------------------------------------------------------------
-//
-//    tm.start_session();
-//    Matrix D = MatrixHandler::parallel_mult(A, B, Config::execution_threads);
-//    tm.finish_session();
-//
-//    MatrixHandler::output(D, Config::Data_path, "multiple threads");
-//
-//    std::cout << "Parallel finished within: " << std::to_string(tm.last()) << std::endl;
-//
-//    std::cout << "Results are equal: " << (C == D);
+    Strassen st = Strassen();
 
-    Matrix R = MatrixHandler::create(Config::R, Config::C, 228);
-    std::cout << R;
-    MatrixHandler::strassen_compitable(R);
-    std::cout << std::endl;
-    std::cout << R;
+    Matrix A = MatrixHandler::create(Config::R, Config::C, 228);
+    Matrix B = MatrixHandler::create(Config::R, Config::C, 322);
+
+    Matrix C = Matrix(A.get_rows(), B.get_columns());
+
+    C = st.parallel_mult(A, B, Config::threads);
+
+    Matrix correct = A * B;
+    Matrix parallel = MatrixHandler::parallel_mult(A, B, Config::threads);
+
+    std::cout << (C == correct && C == parallel) << std::endl;
 
     return 0;
+
 }

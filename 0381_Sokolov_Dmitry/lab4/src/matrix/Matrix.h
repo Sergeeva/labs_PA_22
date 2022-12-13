@@ -12,25 +12,26 @@ class Matrix {
     int rows = Config::R;
     int columns = Config::C;
 
-    std::vector<std::vector<int>> matrix;
+    std::vector<std::vector<int>> matrix =
+            std::vector<std::vector<int>>(rows, std::vector<int>(columns, 0));
 
+    // Used to identify matrices and result of arithmetic operation on them.
     size_t id = 1;
-
-protected:
-
-    bool check_square(int _rows, int _columns) const noexcept;
-
-    bool check_mult(int _rows) const noexcept;
 
 public:
 
     Matrix() = default;
+
+    explicit Matrix(int size);
 
     Matrix(int _rows, int _columns);
 
     Matrix(const Matrix& other) = default;
 
     explicit Matrix(std::vector<std::vector<int>> values);
+
+    //------------------------------------------------------------------------------------------------------------------
+    // Getter-setter methods
 
     int get_rows() const;
 
@@ -42,26 +43,31 @@ public:
 
     size_t get_id() const;
 
+    int get_size() const;
+
+    //------------------------------------------------------------------------------------------------------------------
+    // Dimension checks
+
     bool check_dimensions(const Matrix& other, bool equality=true) const noexcept;
 
-    void resize(int _rows, int _columns);
+    bool check_sum(int _rows, int _columns) const noexcept;
 
-    Matrix operator+(const Matrix& other) const;
+    bool check_mult(int _rows) const noexcept;
 
-    Matrix operator*(const Matrix& other) const;
+    bool is_square();
+
+    //------------------------------------------------------------------------------------------------------------------
+    // Operator overloads
 
     Matrix& operator=(Matrix& other) = default;
 
     Matrix& operator=(Matrix&& other) = default;
 
-    static void partial_sum(const Matrix &first, const Matrix &second, int start, int length, Matrix& result);
+    Matrix operator+(const Matrix& other) const;
 
-    std::vector<int> get_row(int _row) const;
+    Matrix operator*(const Matrix& other) const;
 
-    std::vector<int> get_column(int _column) const;
-
-    static void partial_mult(const Matrix &first, const Matrix &second,
-                             int _row, int _column, Matrix& result);
+    Matrix operator-(const Matrix& other) const;
 
     std::vector<int>& operator[](int row);
 
@@ -70,6 +76,30 @@ public:
     friend std::istream& operator>>(std::istream& in, Matrix& matrix);
 
     friend bool operator==(const Matrix& that, const Matrix& other);
+
+    //------------------------------------------------------------------------------------------------------------------
+    // Parallel sum and subtract functionality
+
+    static void partial_sum(const Matrix &first, const Matrix &second, int start, int length, Matrix& result);
+
+    static void partial_sub(const Matrix& first, const Matrix& second, int start, int length, Matrix& result);
+
+    //------------------------------------------------------------------------------------------------------------------
+    // Parallel multiplication functionality
+
+    void resize(int _rows, int _columns);
+
+    void get_tile(Matrix& tile, int row_start, int column_start, int size) const;
+
+    void set_tile(Matrix& tile, int row_start, int column_start, int size);
+
+    std::vector<int> get_row(int _row) const;
+
+    std::vector<int> get_column(int _column) const;
+
+    static void partial_mult(const Matrix &first, const Matrix &second, int _row, int _column, Matrix& result);
+
+    //------------------------------------------------------------------------------------------------------------------
 
     ~Matrix() = default;
 
