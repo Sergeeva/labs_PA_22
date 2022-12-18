@@ -2,20 +2,33 @@
 #include <vector>
 #include <sstream>
 #include <fstream>
-#include <CL/opencl.hpp>
+#include <cmath>
+#include <CL/cl.hpp>
 
 #include "matrix.hpp"
 
 constexpr char CL_FILE_PATH[] = "./matrix_kernel.cl";
-constexpr unsigned MATRIX_SIZE = 10;
+constexpr unsigned MATRIX_SIDE = 1'024;
+#define DURATION_TIME
+
+#ifdef DURATION_TIME
+#include <chrono>
+std::chrono::_V2::steady_clock::time_point begin;
+std::chrono::_V2::steady_clock::time_point end;
+std::chrono::milliseconds duration;
+#endif
 
 
 
 int main()
 {
-    // MatrixSpace::Matrix f(MATRIX_SIZE);
-    // MatrixSpace::generateMatrix(f);
-    // MatrixSpace::readMatrix(f);
+    MatrixSpace::Matrix firstMatrix(MATRIX_SIDE);
+    MatrixSpace::Matrix secondMatrix(MATRIX_SIDE);
+    MatrixSpace::Matrix resultMatrix(MATRIX_SIDE);
+
+
+    MatrixSpace::generateMatrix(firstMatrix);
+    MatrixSpace::generateMatrix(secondMatrix);
 
     std::vector<cl::Platform> allPlatforms;
     cl::Platform::get(&allPlatforms);
@@ -50,43 +63,59 @@ int main()
     cl::Program::Sources sources;
     sources.push_back({cl_program_text.c_str(), cl_program_text.length()});
 
-
     cl::Program program(context, sources);
 
-    if (program.build(defaultDevice) != CL_SUCCESS)
+    if (program.build(allDevices) != CL_SUCCESS)
     {
         std::cout << "Error building: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(defaultDevice) << "\n";
         return 1;
     }
 
+    const unsigned matrixSize = pow(MATRIX_SIDE, 2);
 
-    cl::Buffer firstMatrixBuffer(context,  CL_MEM_READ_WRITE, sizeof(int) * 10);
-    cl::Buffer secondMatrixBuffer(context, CL_MEM_READ_WRITE, sizeof(int) * 10);
-    cl::Buffer thirdMatrixBuffer(context,  CL_MEM_READ_WRITE, sizeof(int) * 10);
-
-    int A[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    int B[] = {0, 1, 2, 0, 1, 2, 0, 1, 2, 0};
+    cl::Buffer firstMatrixBuffer(context,  CL_MEM_READ_WRITE, sizeof(int) * matrixSize);
+    cl::Buffer secondMatrixBuffer(context, CL_MEM_READ_WRITE, sizeof(int) * matrixSize);
+    cl::Buffer thirdMatrixBuffer(context,  CL_MEM_READ_WRITE, sizeof(int) * matrixSize);
 
     cl::CommandQueue queue(context, defaultDevice);
 
-    queue.enqueueWriteBuffer(firstMatrixBuffer,  CL_TRUE, 0, sizeof(int) * 10, A);
-    queue.enqueueWriteBuffer(secondMatrixBuffer, CL_TRUE, 0, sizeof(int) * 10, B);
+#ifdef DURATION_TIME
+    begin = std::chrono::steady_clock::now();
+#endif
+
+    queue.enqueueWriteBuffer(firstMatrixBuffer,
+                            CL_TRUE,
+                            0,
+                            sizeof(int) * matrixSize,
+                            firstMatrix._data.data());
+
+    queue.enqueueWriteBuffer(secondMatrixBuffer,
+                            CL_TRUE,
+                            0,
+                            sizeof(int) * matrixSize,
+                            secondMatrix._data.data());
 
 
-    // cl::Kernel kernel(program, "simple_add");
+    cl::Kernel kernel(program, "multiplication");
 
-    auto simple_add = cl::KernelFunctor<cl::Buffer, cl::Buffer, cl::Buffer>(program, "simple_add");
-    auto args = cl::EnqueueArgs(queue, cl::NullRange, cl::NDRange(10), cl::NullRange);
+    kernel.setArg(0, firstMatrixBuffer);
+    kernel.setArg(1, secondMatrixBuffer);
+    kernel.setArg(2, thirdMatrixBuffer);
+    kernel.setArg(3, MATRIX_SIDE);
 
-    simple_add(args, firstMatrixBuffer, secondMatrixBuffer, thirdMatrixBuffer);
+    queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(matrixSize), cl::NullRange);
 
-    int C[10];
-    queue.enqueueReadBuffer(thirdMatrixBuffer, CL_TRUE, 0, sizeof(int) * 10, C);
+    queue.enqueueReadBuffer(thirdMatrixBuffer,
+                            CL_TRUE,
+                            0,
+                            sizeof(int) * matrixSize,
+                            resultMatrix._data.data());
 
-    std::cout << " result: \n";
-    for (int i = 0; i < 10; i++) {
-        std::cout << C[i] << " ";
-    }
+#ifdef DURATION_TIME
+    end = std::chrono::steady_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin);
+    std::cout << "Multithread solution: " << duration.count() << " ms\n";
+#endif
 
     return 0;
 }

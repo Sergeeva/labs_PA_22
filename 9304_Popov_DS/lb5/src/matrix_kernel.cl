@@ -1,6 +1,15 @@
-void kernel simple_add(global const int *A, 
-                       global const int *B,
-                       global int *C) 
+void kernel multiplication(global const int* A, 
+                           global const int* B,
+                           global int* C,
+                           const int side)
 {
-    C[get_global_id(0)] = A[get_global_id(0)] + B[get_global_id(0)];
+    const int myR = get_global_id(0) / side;
+    const int myX = get_global_id(0) % side;
+
+    int sum = 0;
+
+    for (unsigned i = 0; i < side; ++i)
+        sum += B[myR * side + i] * A[i * side + myX];
+
+    C[get_global_id(0)] = sum;
 }
