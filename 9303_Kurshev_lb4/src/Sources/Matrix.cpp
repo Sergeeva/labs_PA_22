@@ -226,29 +226,29 @@ void strassen(Matrix &first_matrix, Matrix &second_matrix, Matrix& result_matrix
         else {
             std::vector<std::thread> threads(7);
 
-            Matrix first = sum(first_matrix_parts[0], first_matrix_parts[3], num_threads);
-            Matrix second = sum(second_matrix_parts[0], second_matrix_parts[3], num_threads);
-            threads[0] = std::thread(strassen, std::ref(first), std::ref(second), std::ref(m[0]), depth - 1, num_threads, false);
+            Matrix first0 = sum(first_matrix_parts[0], first_matrix_parts[3], num_threads);
+            Matrix second0 = sum(second_matrix_parts[0], second_matrix_parts[3], num_threads);
+            threads[0] = std::thread(strassen, std::ref(first0), std::ref(second0), std::ref(m[0]), depth - 1, num_threads, false);
 
-            first = sum(first_matrix_parts[2], first_matrix_parts[3], num_threads);
-            threads[1] = std::thread(strassen, std::ref(first), std::ref(second_matrix_parts[0]), std::ref(m[1]), depth - 1, num_threads, false);
+            Matrix first1 = sum(first_matrix_parts[2], first_matrix_parts[3], num_threads);
+            threads[1] = std::thread(strassen, std::ref(first1), std::ref(second_matrix_parts[0]), std::ref(m[1]), depth - 1, num_threads, false);
 
-            second = sub(second_matrix_parts[1], second_matrix_parts[3], num_threads);
-            threads[2] = std::thread(strassen, std::ref(first_matrix_parts[0]), std::ref(second), std::ref(m[2]), depth - 1, num_threads, false);
+            Matrix second2 = sub(second_matrix_parts[1], second_matrix_parts[3], num_threads);
+            threads[2] = std::thread(strassen, std::ref(first_matrix_parts[0]), std::ref(second2), std::ref(m[2]), depth - 1, num_threads, false);
 
-            second = sub(second_matrix_parts[2], second_matrix_parts[0], num_threads);
-            threads[3] = std::thread(strassen, std::ref(first_matrix_parts[3]), std::ref(second), std::ref(m[3]), depth - 1, num_threads, false);
+            Matrix second3 = sub(second_matrix_parts[2], second_matrix_parts[0], num_threads);
+            threads[3] = std::thread(strassen, std::ref(first_matrix_parts[3]), std::ref(second3), std::ref(m[3]), depth - 1, num_threads, false);
 
-            first = sum(first_matrix_parts[0], first_matrix_parts[1], num_threads);
-            threads[4] = std::thread(strassen, std::ref(first), std::ref(second_matrix_parts[3]), std::ref(m[4]), depth - 1, num_threads, false);
+            Matrix first4 = sum(first_matrix_parts[0], first_matrix_parts[1], num_threads);
+            threads[4] = std::thread(strassen, std::ref(first4), std::ref(second_matrix_parts[3]), std::ref(m[4]), depth - 1, num_threads, false);
 
-            first = sum(first_matrix_parts[2], first_matrix_parts[0], num_threads);
-            second = sum(second_matrix_parts[0], second_matrix_parts[1], num_threads);
-            threads[5] = std::thread(strassen, std::ref(first), std::ref(second), std::ref(m[5]), depth - 1, num_threads, false);
+            Matrix first5 = sum(first_matrix_parts[2], first_matrix_parts[0], num_threads);
+            Matrix second5 = sum(second_matrix_parts[0], second_matrix_parts[1], num_threads);
+            threads[5] = std::thread(strassen, std::ref(first5), std::ref(second5), std::ref(m[5]), depth - 1, num_threads, false);
 
-            first = sum(first_matrix_parts[1], first_matrix_parts[3], num_threads);
-            second = sum(second_matrix_parts[2], second_matrix_parts[3], num_threads);
-            threads[6] = std::thread(strassen, std::ref(first), std::ref(second), std::ref(m[6]), depth - 1, num_threads, false);
+            Matrix first6 = sum(first_matrix_parts[1], first_matrix_parts[3], num_threads);
+            Matrix second6 = sum(second_matrix_parts[2], second_matrix_parts[3], num_threads);
+            threads[6] = std::thread(strassen, std::ref(first6), std::ref(second6), std::ref(m[6]), depth - 1, num_threads, false);
 
             for (auto &thread: threads)
                 thread.join();
@@ -288,6 +288,7 @@ void Matrix::write_result() {
 
 std::vector<int> Matrix::get_matrix() {
     return this->matrix;
+}
 }
 
 
