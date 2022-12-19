@@ -289,7 +289,7 @@ void Matrix::write_result() {
 std::vector<int> Matrix::get_matrix() {
     return this->matrix;
 }
-}
+
 
 
 
