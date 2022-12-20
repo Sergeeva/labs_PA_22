@@ -9,40 +9,41 @@ private:
     struct node
     {
         shared_ptr<T> data;
-        shared_ptr<node> next;
-        node(T const &data_) : data(make_shared<T>(data_))
+        shared_ptr<node> next = nullptr;
+        explicit node(T const &data_) : data(make_shared<T>(data_))
         {
         }
     };
     shared_ptr<node> head;
 
 public:
+    LockFreeStack()
+    {
+        head = nullptr;
+    }
+
     void push(T const &data)
     {
-        shared_ptr<node> const new_node = make_shared<node>(node(data));
-        new_node->next = atomic_load(&head);
+        shared_ptr<node> new_node = make_shared<node>(node(data));
+        shared_ptr<node> old_head;
 
-        while (!atomic_compare_exchange_weak(&head,
-                                             &new_node->next, new_node))
-            ;
+        while (!atomic_compare_exchange_weak(&head, &old_head, new_node))
+        {
+            old_head = head;
+            new_node->next = old_head;
+        };
     }
 
     shared_ptr<T> pop()
     {
-        shared_ptr<node> old_head = atomic_load(&head);
-
-        while (old_head && !atomic_compare_exchange_weak(
-                               &head,
-                               &old_head,
-                               atomic_load(&old_head->next)))
-            ;
-
-        if (old_head)
+        shared_ptr<node> old_head;
+        
+        while (!old_head || !atomic_compare_exchange_weak(&head, &old_head, old_head->next))
         {
-            atomic_store(&old_head->next, shared_ptr<node>());
-            return old_head->data;
-        }
-        return shared_ptr<T>();
+            old_head = head;
+        };
+
+        return old_head->data;
     }
 
     ~LockFreeStack()

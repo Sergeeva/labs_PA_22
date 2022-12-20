@@ -52,7 +52,7 @@ int main(int argc, const char **argv)
     LockFreeStack<MATRIX::Matrix<int>> results_queue;
     LockFreeStack<pair<MATRIX::Matrix<int>, MATRIX::Matrix<int>>> operands_queue;
 
-    int count = 20, n = 10, m = 10;
+    int count = 1, n = 10, m = 10;
 
     vector<thread> threads;
 
