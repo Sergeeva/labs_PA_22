@@ -5,7 +5,9 @@ using namespace std::chrono;
 
 void generate(LockFreeStack<pair<MATRIX::Matrix<int>, MATRIX::Matrix<int>>> &_queue, int count, int n, int m)
 {
+
     cout << "gen\n";
+    _queue.increment();
     for (size_t i = 0; i < count; i++)
     {
         cout << "GEN[" + to_string(i + 1) + "] ------- \n";
@@ -20,6 +22,9 @@ void mat_sum(
     int count)
 {
     cout << "sum\n";
+    operands_queue.increment();
+    results_queue.increment();
+
     for (size_t i = 0; i < count; i++)
     {
         cout << "SUM[" + to_string(i + 1) + "] ------- \n";
@@ -30,11 +35,15 @@ void mat_sum(
             results_queue.push(move(result));
         }
     }
+
+    operands_queue.decrement();
+    results_queue.decrement();
 }
 
 void write(LockFreeStack<MATRIX::Matrix<int>> &results_queue, int count)
 {
     cout << "write\n";
+    results_queue.increment();
     for (size_t i = 0; i < count; i++)
     {
         cout << "WRITE[" + to_string(i + 1) + "] ------- \n";
@@ -44,6 +53,7 @@ void write(LockFreeStack<MATRIX::Matrix<int>> &results_queue, int count)
             MATRIX::write(*result, "results/result__" + to_string(i + 1) + "__.txt");
         }
     }
+    results_queue.decrement();
 }
 
 int main(int argc, const char **argv)

@@ -15,11 +15,24 @@ private:
         }
     };
     shared_ptr<node> head;
+    shared_ptr<node> fake = nullptr;
+
+    int worker_comunt = 0;
 
 public:
+    void
+    increment()
+    {
+        ++worker_comunt;
+    }
+    void decrement()
+    {
+        --worker_comunt;
+    }
+
     LockFreeStack()
     {
-        head = nullptr;
+        head = fake;
     }
 
     void push(T const &data)
@@ -37,12 +50,17 @@ public:
     shared_ptr<T> pop()
     {
         shared_ptr<node> old_head;
-        
+        cout << "pop"
+             << "\n";
+
         while (!old_head || !atomic_compare_exchange_weak(&head, &old_head, old_head->next))
         {
             old_head = head;
+            if (worker_comunt <= 1 && !head)
+            {
+                return shared_ptr<T>();
+            }
         };
-
         return old_head->data;
     }
 
