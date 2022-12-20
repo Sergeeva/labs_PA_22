@@ -71,15 +71,13 @@ void start_kernel(cl_kernel kernel, cl_command_queue queue, cl_mem buffer, cl_ui
     size_t local_size[2] = { 256, 1 };
     size_t global_size[2] = { align(width, local_size[0]),align(height, local_size[1]) };
 
-
-
     clock_t start_time = clock();
     clEnqueueNDRangeKernel(queue, kernel, 2, nullptr, global_size, local_size, 0, nullptr, nullptr);
     clEnqueueReadBuffer(queue, buffer, CL_TRUE, 0, sizeof(cl_uint) * width * height, result, 0, nullptr, nullptr);
 
     clFlush(queue);
     clFinish(queue);
-    std::cout << "Time - " << (double)(clock() - start_time) / CLOCKS_PER_SEC << "s" << std::endl;
+    std::cout << "Time 1 - " << (double)(clock() - start_time) / CLOCKS_PER_SEC << "s" << std::endl;
 }
 
 void release(cl_kernel kernel, cl_mem buffer, cl_command_queue queue, cl_program program, cl_context context){
@@ -114,15 +112,10 @@ void save_result(const unsigned int* result, const std::string& name, int width,
     file.close();
 }
 
-void start() {
-    int wight = 1920;
-    int height = 1080;
-    int coeff = 5;
-    int iterations = 256;
-
+void start(int width, int height, int coeff, int iterations) {
     if (!ocl_init()) throw;
 
-    std::vector<cl_uint> result(wight * height);
-    mandelbrot(result.data(), coeff, wight, height, iterations);
-    save_result(result.data(), "./result.ppm", wight, height);
+    std::vector<cl_uint> result(width * height);
+    mandelbrot(result.data(), coeff, width, height, iterations);
+    save_result(result.data(), "./result.ppm", width, height);
 }
