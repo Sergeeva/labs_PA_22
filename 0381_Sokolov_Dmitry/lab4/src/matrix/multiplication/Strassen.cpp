@@ -1,16 +1,13 @@
 #include "Strassen.h"
+#include "../../utilities/session_timer.h"
+
+std::atomic<int> thread_number{};
+
+int get_num(){
+    return thread_number++;
+}
 
 Strassen::Strassen(bool parallelism): parallel_execution(parallelism) {}
-
-std::vector<Matrix> Strassen::get_squares(int size, int amount) {
-    std::vector<Matrix> _result;
-
-    for (int i = 0; i < amount; i++) {
-        _result.emplace_back(size);
-    }
-
-    return _result;
-}
 
 bool Strassen::is_compatible(Matrix &matrix) {
     if (!matrix.is_square()) {
@@ -30,149 +27,28 @@ void Strassen::convert_to_square(Matrix &matrix) {
     matrix.resize(new_size, new_size);
 }
 
-int Strassen::split_size(Matrix &matrix) {
-    if (!matrix.is_square()) {
-        throw std::runtime_error("Matrix is not square!");
-    }
-
-    return matrix.get_rows() / 2;
+int Strassen::split_size(int size) {
+    return size / 2;
 }
 
-void Strassen::split_matrix(Matrix& source, int split,
-                            Matrix &a11, Matrix &a12, Matrix &a21, Matrix &a22) {
+Matrix Strassen::assemble_parts(const Matrix &c11, const Matrix &c12, const Matrix &c21, const Matrix &c22, int size) {
+    Matrix result = Matrix(size);
 
-    std::thread first(&Matrix::get_tile, &source, std::ref(a11), 0, 0, split);
-    std::thread second(&Matrix::get_tile, &source, std::ref(a12), 0, split, split);
-    std::thread third(&Matrix::get_tile, &source, std::ref(a21), split, 0, split);
-    std::thread fourth(&Matrix::get_tile, &source, std::ref(a22), split, split, split);
+    result.set_tile(c11, 0, 0, c11.get_rows());
+    result.set_tile(c12, 0, c12.get_rows(), c12.get_rows());
+    result.set_tile(c21, c21.get_rows(), 0, c21.get_rows());
+    result.set_tile(c22, c22.get_rows(), c22.get_rows(), c22.get_rows());
 
-    first.join();
-    second.join();
-    third.join();
-    fourth.join();
-}
-
-void Strassen::merge_matrix(Matrix* source, int split,
-                            Matrix &a11, Matrix &a12, Matrix &a21, Matrix &a22) {
-
-    std::thread first(&Matrix::set_tile, source, std::ref(a11), 0, 0, split);
-    std::thread second(&Matrix::set_tile, source, std::ref(a12), 0, split, split);
-    std::thread third(&Matrix::set_tile, source, std::ref(a21), split, 0, split);
-    std::thread fourth(&Matrix::set_tile, source, std::ref(a22), split, split, split);
-
-    first.join();
-    second.join();
-    third.join();
-    fourth.join();
-}
-
-void Strassen::strassen_algorithm(Matrix &first, Matrix &second, Matrix* result, int thread_number, int depth) {
-    if (!(result->get_size() <= Config::size_floor || depth > Config::recursion_limit)) {
-        int new_size = split_size(*result);
-
-        // first matrix partition
-        std::vector<Matrix> a = get_squares(new_size, 4);
-        // second matrix partition
-        std::vector<Matrix> b = get_squares(new_size, 4);
-
-        split_matrix(first, new_size, a[0], a[1], a[2], a[3]);
-        split_matrix(second, new_size, b[0], b[1], b[2], b[3]);
-
-        std::vector<std::thread> execution (7);
-        std::vector<Matrix> p = MatrixHandler::get_squares(new_size, 7);
-
-        // recursive call for sum(a11, a22) and sum(b11, b22)
-        execution[0] = std::thread(std::bind(&Strassen::strassen_algorithm, this,
-                                             MatrixHandler::parallel_sum(a[0], a[3], thread_number), // a11 + a22
-                                             MatrixHandler::parallel_sum(b[0], b[3], thread_number), // b11 + b22
-                                             &p[0], // p1
-                                             thread_number,
-                                             depth + 1));
-
-        // recursive call for sum(a21, a22) and b11
-        execution[1] = std::thread(std::bind(&Strassen::strassen_algorithm, this,
-                                             MatrixHandler::parallel_sum(a[2], a[3], thread_number), // a21 + a22
-                                             b[0],  // b11
-                                             &p[1], // p2
-                                             thread_number,
-                                             depth + 1));
-
-        // recursive call for a11 and sub(b12, b22)
-        execution[2] = std::thread(std::bind(&Strassen::strassen_algorithm, this,
-                                             a[0], // a11
-                                             MatrixHandler::parallel_sub(b[1], b[3], thread_number), // b12 - b22
-                                             &p[2], // p3
-                                             thread_number,
-                                             depth + 1));
-
-        // recursive call for a22 and (b21, b11)
-        execution[3] = std::thread(std::bind(&Strassen::strassen_algorithm, this,
-                                             a[3], // a22
-                                             MatrixHandler::parallel_sub(b[2], b[0], thread_number), // b21 - b11
-                                             &p[3], // p4
-                                             thread_number,
-                                             depth + 1));
-
-        // recursive call for sum(a11, a12) and b22
-        execution[4] = std::thread(std::bind(&Strassen::strassen_algorithm, this,
-                                             MatrixHandler::parallel_sum(a[0], a[1], thread_number), // a11 - a12
-                                             b[3],  // b22
-                                             &p[4], // p5
-                                             thread_number,
-                                             depth + 1));
-
-        // recursive call for sub(a21, a11) and sum(b11, b12)
-        execution[5] = std::thread(std::bind(&Strassen::strassen_algorithm, this,
-                                             MatrixHandler::parallel_sub(a[2], a[0], thread_number), // a21 - a11
-                                             MatrixHandler::parallel_sum(b[0], b[1], thread_number), // b11 + b12
-                                             &p[5], // p6
-                                             thread_number,
-                                             depth + 1));
-
-        // recursive call for sub(a12, a22) and sum(b21, b22)
-        execution[6] = std::thread(std::bind(&Strassen::strassen_algorithm, this,
-                                             MatrixHandler::parallel_sub(a[1], a[3], thread_number), // a12 - a22
-                                             MatrixHandler::parallel_sum(b[2], b[3], thread_number), // b21 + b22
-                                             &p[6], // p7
-                                             thread_number,
-                                             depth + 1));
-
-        for (auto &exec: execution) {
-            exec.join();
-        }
-
-        auto c = get_squares(new_size, 4);
-
-        c[0] = MatrixHandler::parallel_sum(
-                MatrixHandler::parallel_sum(p[0], p[3], thread_number),
-                MatrixHandler::parallel_sub(p[6], p[4], thread_number),
-                thread_number
-                );
-
-        c[1] = MatrixHandler::parallel_sum(p[2], p[4], thread_number);
-        c[2] = MatrixHandler::parallel_sum(p[1], p[3], thread_number);
-
-        c[3] = MatrixHandler::parallel_sum(
-                MatrixHandler::parallel_sub(p[0], p[1], thread_number),
-                MatrixHandler::parallel_sum(p[2], p[5], thread_number),
-                thread_number
-        );
-
-        merge_matrix(result, new_size, c[0], c[1], c[2], c[3]);
-
-    }
-    else {
-        *result = first * second;
-    }
+    return result;
 }
 
 Matrix Strassen::parallel_mult(Matrix &A, Matrix &B, int thread_number) {
-    if(!MatrixHandler::strassen_compatible(A)) {
-        MatrixHandler::strassen_convert(A);
+    if(!Strassen::is_compatible(A)) {
+        Strassen::convert_to_square(A);
     }
 
-    if(!MatrixHandler::strassen_compatible(B)) {
-        MatrixHandler::strassen_convert(B);
+    if(!Strassen::is_compatible(B)) {
+        Strassen::convert_to_square(B);
     }
 
     std::string check = MatrixHandler::check_data(A, B, thread_number, true);
@@ -181,13 +57,130 @@ Matrix Strassen::parallel_mult(Matrix &A, Matrix &B, int thread_number) {
         throw std::runtime_error(check);
     }
 
-    Matrix* result = new Matrix(A.get_rows(), B.get_columns());
+    return Strassen::strassen_algorithm(A, B);
 
-    strassen_algorithm(A, B, result, thread_number);
-
-    Matrix ret = *result;
-    free(result);
-
-    return ret;
 }
 
+Matrix Strassen::strassen_algorithm(const Matrix &A, const Matrix &B, int depth) {
+//    Logger::trace(std::to_string(depth) + "depth reached! \n", true);
+
+    if (A.get_size() <= Config::size_floor) {
+//        Logger::trace("Size floor reached! Starting simple multiplication \n", true);
+        return A * B;
+    }
+
+    else {
+        if (depth < Config::recursion_limit) {
+            return parallel_strassen(A, B, depth);
+        }
+    }
+
+//    Logger::trace("recursion limit reached! Starting consecutive Strassen \n", true);
+    return Strassen::serial_strassen(A, B, depth);
+}
+
+Matrix Strassen::serial_strassen(const Matrix &A, const Matrix &B, int depth) {
+    depth++;
+
+    int split_size = Strassen::split_size(A.get_rows());
+
+    Matrix a11 = A.get_tile(0, 0, split_size);
+    Matrix a12 = A.get_tile(0, split_size, split_size);
+    Matrix a21 = A.get_tile(split_size, 0, split_size);
+    Matrix a22 = A.get_tile(split_size, split_size, split_size);
+
+    Matrix b11 = B.get_tile(0, 0, split_size);
+    Matrix b12 = B.get_tile(0, split_size, split_size);
+    Matrix b21 = B.get_tile(split_size, 0, split_size);
+    Matrix b22 = B.get_tile(split_size, split_size, split_size);
+
+    Matrix p1 = Strassen::strassen_algorithm(a11 + a22, b11 + b22, depth);
+    Matrix p2 = Strassen::strassen_algorithm(a21 + a22, b11, depth);
+    Matrix p3 = Strassen::strassen_algorithm(a11, b12 - b22, depth);
+    Matrix p4 = Strassen::strassen_algorithm(a22, b21 - b11, depth);
+    Matrix p5 = Strassen::strassen_algorithm(a11 + a22, b21, depth);
+    Matrix p6 = Strassen::strassen_algorithm(a21 - a11, b11 + b12, depth);
+    Matrix p7 = Strassen::strassen_algorithm(a12 - a22, b21 + b22, depth);
+
+    Matrix c11 = p1 + p4 - p5 + p7;
+    Matrix c12 = p3 + p5;
+    Matrix c21 = p2 + p4;
+    Matrix c22 = p1 - p2 + p3 + p6;
+
+    return assemble_parts(c11, c12, c21, c22, A.get_rows());
+}
+
+Matrix Strassen::parallel_strassen(const Matrix &A, const Matrix &B, int depth) {
+    depth++;
+
+    int split_size = Strassen::split_size(A.get_rows());
+
+    Matrix a11 = A.get_tile(0, 0, split_size);
+    Matrix a12 = A.get_tile(0, split_size, split_size);
+    Matrix a21 = A.get_tile(split_size, 0, split_size);
+    Matrix a22 = A.get_tile(split_size, split_size, split_size);
+
+    Matrix b11 = B.get_tile(0, 0, split_size);
+    Matrix b12 = B.get_tile(0, split_size, split_size);
+    Matrix b21 = B.get_tile(split_size, 0, split_size);
+    Matrix b22 = B.get_tile(split_size, split_size, split_size);
+
+    std::vector<std::thread> execution;
+
+    std::promise<Matrix> P1;
+    auto F1 = P1.get_future();
+    Strassen::execute(execution, a11 + a22, b11 + b22, std::ref(P1), depth);
+
+    std::promise<Matrix> P2;
+    auto F2 = P2.get_future();
+    Strassen::execute(execution, a21 + a22, b11, std::ref(P2), depth);
+
+    std::promise<Matrix> P3;
+    auto F3 = P3.get_future();
+    Strassen::execute(execution, a11, b12 - b22, std::ref(P3), depth);
+
+    std::promise<Matrix> P4;
+    auto F4 = P4.get_future();
+    Strassen::execute(execution, a22, b21 - b11, std::ref(P4), depth);
+
+    std::promise<Matrix> P5;
+    auto F5 = P5.get_future();
+    Strassen::execute(execution, a11 + a12, b22, std::ref(P5), depth);
+
+    std::promise<Matrix> P6;
+    auto F6 = P6.get_future();
+    Strassen::execute(execution, a21 - a11, b11 + b12, std::ref(P6), depth);
+
+    std::promise<Matrix> P7;
+    auto F7 = P7.get_future();
+    Strassen::execute(execution, a12 - a22, b21 + b22, std::ref(P7), depth);
+
+    Matrix p1 = F1.get();
+    Matrix p2 = F2.get();
+    Matrix p3 = F3.get();
+    Matrix p4 = F4.get();
+    Matrix p5 = F5.get();
+    Matrix p6 = F6.get();
+    Matrix p7 = F7.get();
+
+    Matrix c11 = p1 + p4 - p5 + p7;
+    Matrix c12 = p3 + p5;
+    Matrix c21 = p2 + p4;
+    Matrix c22 = p1 - p2 + p3 + p6;
+
+    for (auto &thread: execution) {
+        thread.join();
+    }
+
+    return Strassen::assemble_parts(c11, c12, c21, c22, A.get_rows());
+}
+
+void Strassen::execute(std::vector<std::thread> &execution,
+                       const Matrix &A, const Matrix &B, std::promise<Matrix> &result, int depth)
+{
+     execution.emplace_back([]
+            (const Matrix& first, const Matrix& second, std::promise<Matrix>& result, int depth)
+            {
+                result.set_value(Strassen::strassen_algorithm(first, second, depth));
+            }, A, B, std::ref(result), depth);
+}

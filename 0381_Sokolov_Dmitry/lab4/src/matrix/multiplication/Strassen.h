@@ -3,21 +3,21 @@
 
 #include <vector>
 #include <memory>
+#include <future>
+#include <atomic>
 
 #include "../MatrixHandler.h"
 
+int get_num();
 
 class Strassen {
 
     bool parallel_execution = false;
 
-    std::vector<Matrix> get_squares(int size, int amount);
+    static Matrix assemble_parts(const Matrix& c11, const Matrix& c12, const Matrix& c21, const Matrix& c22, int size);
 
-    void split_matrix(Matrix& source, int split,
-                      Matrix& a11, Matrix& a12, Matrix& a21, Matrix& a22);
-
-    void merge_matrix(Matrix* source, int split,
-                             Matrix& a11, Matrix& a12, Matrix& a21, Matrix& a22);
+    static void execute(std::vector<std::thread>& execution,
+                 const Matrix& A, const Matrix& B, std::promise<Matrix>& result, int depth);
 
 public:
 
@@ -25,15 +25,19 @@ public:
 
     explicit Strassen(bool parallelism);
 
-    bool is_compatible(Matrix& matrix);
+    static bool is_compatible(Matrix& matrix);
 
-    void convert_to_square(Matrix& matrix);
+    static void convert_to_square(Matrix& matrix);
 
-    int split_size(Matrix& matrix);
+    static int split_size(int size);
 
-    void strassen_algorithm(Matrix& first, Matrix& second, Matrix* result, int thread_number, int depth= 1);
+    static Matrix strassen_algorithm(const Matrix& A, const Matrix& B, int depth = 1);
 
-    Matrix parallel_mult(Matrix& A, Matrix& B, int thread_number);
+    static Matrix serial_strassen(const Matrix& A, const Matrix& B, int depth);
+
+    static Matrix parallel_strassen(const Matrix& A, const Matrix& B, int depth);
+
+    static Matrix parallel_mult(Matrix& A, Matrix& B, int thread_number);
 
     ~Strassen() = default;
 };
