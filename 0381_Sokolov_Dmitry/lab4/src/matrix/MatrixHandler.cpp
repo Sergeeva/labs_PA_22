@@ -43,7 +43,7 @@ std::vector<Matrix> MatrixHandler::get_squares(int size, int amount) {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-Matrix MatrixHandler::parallel_sum(Matrix A, Matrix B, int thread_number) {
+Matrix MatrixHandler::parallel_sum(Matrix& A, Matrix& B, int thread_number) {
 
     std::string check = MatrixHandler::check_data(A, B, thread_number);
 
@@ -71,7 +71,7 @@ Matrix MatrixHandler::parallel_sum(Matrix A, Matrix B, int thread_number) {
     return result;
 }
 
-Matrix MatrixHandler::parallel_sub(Matrix A, Matrix B, int thread_number) {
+Matrix MatrixHandler::parallel_sub(Matrix& A, Matrix& B, int thread_number) {
     std::string check = MatrixHandler::check_data(A, B, thread_number);
 
     if (!check.empty()) {
@@ -122,7 +122,21 @@ void MatrixHandler::row_multiply(Matrix& A, Matrix& B, int current_row, int rows
 
 }
 
-Matrix MatrixHandler::parallel_mult(Matrix &A, Matrix &B, int thread_number) {
+void MatrixHandler::multiply_part(Matrix &A, Matrix &B, int start, int length, Matrix &result) {
+    Logger::trace("multiplying part: " + std::to_string(start) + " - " + std::to_string(start + length) +
+    "\n", true);
+
+    int size = result.get_rows() * result.get_columns();
+
+    for (int i = start; (i < (start + length)) && (i < size); ++i) {
+        int y = i / result.get_columns();
+        int x = i % result.get_columns();
+
+        Matrix::partial_mult(A, B, y, x, result);
+    }
+}
+
+Matrix MatrixHandler::by_row_mult(Matrix &A, Matrix &B, int thread_number) {
     std::string check = MatrixHandler::check_data(A, B, thread_number, true);
 
     if (!check.empty()) {
@@ -157,107 +171,53 @@ Matrix MatrixHandler::parallel_mult(Matrix &A, Matrix &B, int thread_number) {
 
 }
 
-//----------------------------------------------------------------------------------------------------------------------
-
-bool MatrixHandler::strassen_compatible(Matrix &matrix) {
-    if (!matrix.is_square()) {
-        return false;
-    }
-
-    if (matrix.get_rows() % 2 != 0) {
-        return false;
-    }
-
-    return true;
-}
-
-void MatrixHandler::strassen_convert(Matrix &matrix) {
-    int new_size = std::pow(2, std::ceil(std::log2(std::max(matrix.get_rows(), matrix.get_columns()))));
-
-    matrix.resize(new_size, new_size);
-}
-
-int MatrixHandler::split_size(Matrix &matrix) {
-    if (!matrix.is_square()) {
-        throw std::runtime_error("Matrix is not square!");
-    }
-
-    return matrix.get_rows() / 2;
-}
-
-void MatrixHandler::split_matrix(Matrix* source, int split, Matrix& a11, Matrix& a12, Matrix& a21, Matrix& a22) {
-
-    std::thread first(&Matrix::get_tile, source, std::ref(a11), 0, 0, split);
-    std::thread second(&Matrix::get_tile, source, std::ref(a12), 0, split, split);
-    std::thread third(&Matrix::get_tile, source, std::ref(a21), split, 0, split);
-    std::thread fourth(&Matrix::get_tile, source, std::ref(a22), split, split, split);
-
-    first.join();
-    second.join();
-    third.join();
-    fourth.join();
-
-}
-
-void MatrixHandler::merge_matrix(Matrix *source, int split, Matrix &a11, Matrix &a12, Matrix &a21, Matrix &a22) {
-    std::thread first(&Matrix::set_tile, source, std::ref(a11), 0, 0, split);
-    std::thread second(&Matrix::set_tile, source, std::ref(a12), 0, split, split);
-    std::thread third(&Matrix::set_tile, source, std::ref(a21), split, 0, split);
-    std::thread fourth(&Matrix::set_tile, source, std::ref(a22), split, split, split);
-
-    first.join();
-    second.join();
-    third.join();
-    fourth.join();
-
-}
-
-Matrix MatrixHandler::strassen_algorithm(Matrix &A, Matrix &B, int thread_number) {
-
+Matrix MatrixHandler::parallel_mult(Matrix &A, Matrix &B, int thread_number) {
     std::string check = MatrixHandler::check_data(A, B, thread_number, true);
 
     if (!check.empty()) {
         throw std::runtime_error(check);
     }
 
-    if(!MatrixHandler::strassen_compatible(A)) {
-        MatrixHandler::strassen_convert(A);
+    Matrix result = Matrix(A.get_rows(), B.get_columns());
+
+    int size = result.get_rows() * result.get_columns();
+    int per_thread = (size / thread_number) + (size % thread_number > 0 ? 1 : 0);
+
+    std::vector<std::thread> execution;
+
+    MatrixHandler::output(A, Config::Data_path, "A_exec");
+    MatrixHandler::output(B, Config::Data_path, "B_exec");
+
+    Logger::info("Starting simple parallelization! Each thread processes " + std::to_string(per_thread) +
+    " [\n", true);
+
+    for (int i = 0; i < size; i += per_thread) {
+        std::thread thread([&A, &B, i, per_thread, &result]
+        { MatrixHandler::multiply_part(std::ref(A), std::ref(B), i, per_thread,
+                                       std::ref(result)); }
+        );
+
+        execution.emplace_back(std::move(thread));
     }
 
-    if(!MatrixHandler::strassen_compatible(B)) {
-        MatrixHandler::strassen_convert(B);
+    for (auto &thread: execution) {
+        thread.join();
     }
 
-    Matrix* result = new Matrix(A.get_rows(), B.get_columns());
+    Logger::info("\n] Simple parallelization ended!\n\n", true);
 
-    strassen_mult((Matrix &) A, (Matrix &) B, result, thread_number);
-
-    return *result;
+    return result;
 }
 
-void MatrixHandler::strassen_mult(Matrix &A, Matrix &B, Matrix *result, int thread_number, int depth) {
-    if (result->get_size() <= Config::size_floor || depth > Config::recursion_limit) {
-        *result = A * B;
-        return;
-    }
+//----------------------------------------------------------------------------------------------------------------------
 
-    int new_size = MatrixHandler::split_size(*result);
-
-    // A matrix partition
-    std::vector<Matrix> a = MatrixHandler::get_squares(new_size, 4);
-    // B matrix partition
-    std::vector<Matrix> b = MatrixHandler::get_squares(new_size, 4);
-
-    MatrixHandler::split_matrix(&A, new_size, a[0], a[1], a[2], a[3]);
-    MatrixHandler::split_matrix(&B, new_size, b[0], b[1], b[2], b[3]);
-
-    std::vector<std::thread> execution (7);
-    std::vector<Matrix> p = MatrixHandler::get_squares(new_size, 7);
-
-//    execution[0] = std::thread([]);
-
-
-}
+//void MatrixHandler::threaded_sum(Matrix &A, Matrix &B, std::promise<Matrix> result, int thread_number) {
+//    result.set_value(MatrixHandler::parallel_sum(A, B, thread_number));
+//}
+//
+//void MatrixHandler::threaded_sub(Matrix &A, Matrix &B, std::promise<Matrix> result, int thread_number) {
+//    result.set_value(MatrixHandler::parallel_sub(A, B, thread_number));
+//}
 
 //----------------------------------------------------------------------------------------------------------------------
 
@@ -284,4 +244,3 @@ void MatrixHandler::output(Matrix& matrix, const std::string& path, const std::s
     output << "\n";
     output.close();
 }
-

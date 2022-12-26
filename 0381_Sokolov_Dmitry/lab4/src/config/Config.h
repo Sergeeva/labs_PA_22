@@ -15,7 +15,7 @@ public:
 
     // file handler
     static const std::string Data_path;
-    static const std::string summed;
+    static const std::string result;
 
     //Threads
     static const int min_threads;
@@ -28,6 +28,9 @@ public:
     static const int max_size;
     static const int threads;
     static const int iterations;
+
+    //Logger
+    static const std::string log_path;
 
     static void log_config();
 

@@ -7,6 +7,7 @@
 #include <stdexcept>
 
 #include "../config/config.h"
+#include "../logging/Logger.h"
 
 class Matrix {
     int rows = Config::R;
@@ -71,6 +72,8 @@ public:
 
     std::vector<int>& operator[](int row);
 
+    std::vector<int> operator[](int row) const;
+
     friend std::ostream& operator<<(std::ostream& out, const Matrix& matrix);
 
     friend std::istream& operator>>(std::istream& in, Matrix& matrix);
@@ -89,11 +92,11 @@ public:
 
     void resize(int _rows, int _columns);
 
-    void get_tile(Matrix& tile, int row_start, int column_start, int size) const;
+    Matrix get_tile(int row_start, int column_start, int size) const;
 
-    void set_tile(Matrix& tile, int row_start, int column_start, int size);
+    void set_tile(const Matrix& tile, int row_start, int column_start, int size);
 
-    std::vector<int> get_row(int _row) const;
+    std::vector<int> const& get_row(int _row) const;
 
     std::vector<int> get_column(int _column) const;
 

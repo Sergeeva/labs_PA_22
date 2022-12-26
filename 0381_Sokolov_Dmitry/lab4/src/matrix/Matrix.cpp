@@ -28,7 +28,7 @@ int Matrix::get(int row, int column) const
     return this->matrix[row][column];
 }
 
-std::vector<int> Matrix::get_row(int _row) const {
+std::vector<int> const& Matrix::get_row(int _row) const {
     return this->matrix[_row];
 }
 
@@ -42,7 +42,7 @@ std::vector<int> Matrix::get_column(int _column) const {
 }
 
 int Matrix::get_size() const {
-    return this->rows * this->columns;
+    return this->rows;
 }
 
 bool Matrix::check_dimensions(const Matrix& other, bool equality) const noexcept
@@ -95,16 +95,20 @@ void Matrix::resize(int _rows, int _columns) {
     }
 }
 
-void Matrix::get_tile(Matrix& tile, int row_start, int column_start, int size) const {
+Matrix Matrix::get_tile(int row_start, int column_start, int size) const {
+
+    Matrix tile = Matrix(size);
 
     for (int i = row_start; i < row_start + size; i++) {
         for (int j = column_start; j < column_start + size; j++) {
             tile[i - row_start][j - column_start] = this->matrix[i][j];
         }
     }
+
+    return tile;
 }
 
-void Matrix::set_tile(Matrix &tile, int row_start, int column_start, int size) {
+void Matrix::set_tile(const Matrix &tile, int row_start, int column_start, int size) {
     for (int i = row_start; i < row_start + size; i++) {
         for (int j = column_start; j < column_start + size; j++) {
             this->matrix[i][j] = tile[i - row_start][j - column_start];
@@ -171,6 +175,10 @@ Matrix Matrix::operator*(const Matrix &other) const {
 
 std::vector<int>& Matrix::operator[](int row)
 {
+    return std::ref(this->matrix[row]);
+}
+
+std::vector<int> Matrix::operator[](int row) const {
     return this->matrix[row];
 }
 
@@ -248,7 +256,8 @@ void Matrix::partial_mult(const Matrix &first, const Matrix &second,
     }
 
     result[_row][_column] = element;
-
+    Logger::trace("multiplied element: " + std::to_string(_row) + "_" + std::to_string(_column) +
+    " = " + std::to_string(element) + "\n", true);
 }
 
 void Matrix::set_id(size_t value) {
