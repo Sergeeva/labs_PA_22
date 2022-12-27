@@ -1,5 +1,4 @@
 #include "Strassen.h"
-#include "../../utilities/session_timer.h"
 
 std::atomic<int> thread_number{};
 
@@ -43,6 +42,8 @@ Matrix Strassen::assemble_parts(const Matrix &c11, const Matrix &c12, const Matr
 }
 
 Matrix Strassen::parallel_mult(Matrix &A, Matrix &B, int thread_number) {
+    Logger::info("Strassen algorithm started {\n", true);
+
     if(!Strassen::is_compatible(A)) {
         Strassen::convert_to_square(A);
     }
@@ -57,25 +58,30 @@ Matrix Strassen::parallel_mult(Matrix &A, Matrix &B, int thread_number) {
         throw std::runtime_error(check);
     }
 
-    return Strassen::strassen_algorithm(A, B);
+    auto result = Strassen::strassen_algorithm(A, B);
+    result.resize(Config::R, Config::C);
+
+    Logger::info(" } Strassen algorithm finished!\n\n", true);
+
+    return result;
 
 }
 
 Matrix Strassen::strassen_algorithm(const Matrix &A, const Matrix &B, int depth) {
-//    Logger::trace(std::to_string(depth) + "depth reached! \n", true);
+    Logger::trace(std::to_string(depth) + "depth reached! \n", true);
 
     if (A.get_size() <= Config::size_floor) {
-//        Logger::trace("Size floor reached! Starting simple multiplication \n", true);
+        Logger::trace("Size floor reached! Starting simple multiplication \n", true);
         return A * B;
     }
 
     else {
-        if (depth < Config::recursion_limit) {
+        if (depth < Config::depth_limit) {
             return parallel_strassen(A, B, depth);
         }
     }
 
-//    Logger::trace("recursion limit reached! Starting consecutive Strassen \n", true);
+    Logger::trace("recursion limit reached! Starting consecutive Strassen \n", true);
     return Strassen::serial_strassen(A, B, depth);
 }
 

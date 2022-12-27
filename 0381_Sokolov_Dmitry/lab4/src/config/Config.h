@@ -20,20 +20,15 @@ public:
     //Threads
     static const int min_threads;
     static const int max_threads;
-    static const int execution_threads;
-    static const int recursion_limit;
-    static const int size_floor;
-
-    //Buffer
-    static const int max_size;
     static const int threads;
-    static const int iterations;
+
+    static const int depth_limit;
+    static const int size_floor;
 
     //Logger
     static const std::string log_path;
 
     static void log_config();
-
 };
 
 

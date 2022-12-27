@@ -148,9 +148,9 @@ Matrix MatrixHandler::by_row_mult(Matrix &A, Matrix &B, int thread_number) {
     int size = result.get_rows();
     int per_thread = (size / thread_number) + (size % thread_number > 0 ? 1 : 0);
 
-    if (per_thread > Config::recursion_limit) {
+    if (per_thread > Config::depth_limit) {
         throw std::runtime_error("Maximum recursion depth exceeded! (" + std::to_string(per_thread) +
-                                 " - current \\ " + std::to_string(Config::recursion_limit) + " - allowed)");
+                                 " - current \\ " + std::to_string(Config::depth_limit) + " - allowed)");
     }
 
     std::vector<std::thread> execution;
@@ -185,11 +185,8 @@ Matrix MatrixHandler::parallel_mult(Matrix &A, Matrix &B, int thread_number) {
 
     std::vector<std::thread> execution;
 
-    MatrixHandler::output(A, Config::Data_path, "A_exec");
-    MatrixHandler::output(B, Config::Data_path, "B_exec");
-
     Logger::info("Starting simple parallelization! Each thread processes " + std::to_string(per_thread) +
-    " [\n", true);
+    " {\n", true);
 
     for (int i = 0; i < size; i += per_thread) {
         std::thread thread([&A, &B, i, per_thread, &result]
@@ -204,7 +201,7 @@ Matrix MatrixHandler::parallel_mult(Matrix &A, Matrix &B, int thread_number) {
         thread.join();
     }
 
-    Logger::info("\n] Simple parallelization ended!\n\n", true);
+    Logger::info("} Simple parallelization ended!\n\n", true);
 
     return result;
 }

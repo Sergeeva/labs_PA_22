@@ -5,15 +5,22 @@
 #include <iostream>
 #include <fstream>
 #include <filesystem>
+#include <chrono>
 
 #include "./Message.h"
 #include "../buffers/Treiber_stack.h"
+
+
+using namespace std::chrono;
+
 
 bool compare_messages(const Message& first, const Message& second);
 
 class Logger {
 
     static Logger* instance;
+
+    static MPriority mode;
 
     static TRStack<Message> file_output;
     static TRStack<Message> console_output;
@@ -25,6 +32,8 @@ class Logger {
 public:
 
     static Logger& get_instance();
+
+    static void toggle_log(MPriority _mode);
 
     static void trace(const std::string& message, bool to_file = false);
 
@@ -38,7 +47,7 @@ public:
 
     static void log(const Message& message, bool to_file = false);
 
-    static void dump(const std::string& file_path);
+    static void dump(const std::string& file_path, const std::string& file_name = "log");
 
     ~Logger() = default;
 

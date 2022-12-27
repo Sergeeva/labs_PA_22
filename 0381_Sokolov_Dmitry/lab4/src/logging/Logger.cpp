@@ -2,6 +2,7 @@
 
 TRStack<Message> Logger::file_output = TRStack<Message>();
 TRStack<Message> Logger::console_output = TRStack<Message>();
+MPriority Logger::mode = INFO;
 
 Logger &Logger::get_instance() {
     static Logger instance;
@@ -9,28 +10,36 @@ Logger &Logger::get_instance() {
     return instance;
 }
 
+void Logger::toggle_log(MPriority _mode) {
+    mode = _mode;
+}
+
 void Logger::trace(const std::string& message, bool to_file) {
-    log(TRACE, message, to_file);
+    if (mode >= TRACE) {
+        log(TRACE, message, to_file);
+    }
 }
 
 void Logger::info(const std::string& message, bool to_file) {
-    log(INFO, message, to_file);
+    if (mode >= INFO) {
+        log(INFO, message, to_file);
+    }
 }
 
 void Logger::warn(const std::string &message, bool to_file) {
-    log(WARN, message, to_file);
+    if (mode >= WARN) {
+        log(WARN, message, to_file);
+    }
 }
 
 void Logger::error(const std::string &message, bool to_file) {
-    log(ERROR, message, to_file);
+    if (mode >= ERROR) {
+        log(ERROR, message, to_file);
+    }
 }
 
 void Logger::log(MPriority priority, const std::string &message, bool to_file) {
-    if (to_file) {
-        get_instance().file_output.push(Message(priority, message));
-    } else {
-        get_instance().console_output.push(Message(priority, message));
-    }
+    Logger::log(Message(priority, message), to_file);
 }
 
 void Logger::log(const Message &message, bool to_file) {
@@ -39,9 +48,10 @@ void Logger::log(const Message &message, bool to_file) {
     } else {
         get_instance().console_output.push(message);
     }
+
 }
 
-void Logger::dump(const std::string& file_path) {
+void Logger::dump(const std::string& file_path, const std::string& file_name) {
     std::vector<Message> file;
     std::vector<Message> console;
 
@@ -61,7 +71,7 @@ void Logger::dump(const std::string& file_path) {
     std::stable_sort(file.begin(), file.end(), compare_messages);
 
     std::ofstream output;
-    std::string path = file_path + "log.txt";
+    std::string path = file_path + file_name + ".txt";
     output.open(path, std::ofstream::app);
 
     if (!output.is_open()) {
@@ -78,6 +88,9 @@ void Logger::dump(const std::string& file_path) {
     for (const auto & i : file) {
         output << i;
     }
+
+    output << "-----------------------------------------------------------------\n\n";
+    output.close();
 
     for(const auto & i : console) {
         std::cout << i;

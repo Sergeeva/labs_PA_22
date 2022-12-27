@@ -1,8 +1,8 @@
 #include "config.h"
 
 // Matrix dimensions
-const int  Config::R = 100;
-const int Config::C = 100;
+const int  Config::R = 2048;
+const int Config::C = 2048;
 
 // Defines the maximum number of digits of the matrix values
 const int Config::generation_ceiling = 10;
@@ -11,30 +11,23 @@ const int Config::generation_ceiling = 10;
 const std::string Config::Data_path = "../data/";
 const std::string Config::result = "AB";
 
-// Multiple-thread arithmetic parameters
+// Simple parallelization parameters
 const int Config::min_threads = 1;
 const int Config::max_threads = 70;
-const int Config::execution_threads = 2;
-const int Config::recursion_limit = 10;
-const int Config::size_floor = 128;
+const int Config::threads = 7;
 
-// Number of operations being performed on matrices
-const int Config::threads = 3;
-const int Config::iterations = 4;
+// Strassen parameters
+const int Config::depth_limit = 5;
+const int Config::size_floor = 64;
 
-// Buffer configuration
-const int Config::max_size = 300;
 
-// Logger
+// Logger parameter
 const std::string Config::log_path = "../logs/";
 
 void Config::log_config() {
-    std::cout << "current configuration:" << std::endl;
-    std::cout << "Matrices [" + std::to_string(Config::R) + " X " + std::to_string(Config::C) + "], ";
-    std::cout << "which are randomly generated, " << std::endl;
-    std::cout << "Are being result by " + std::to_string(Config::threads) + " threads, ";
-    std::cout << "each iterating " + std::to_string(Config::iterations) + " times." << std::endl;
-    std::cout << "Each sum is paralleled into " + std::to_string(Config::execution_threads) + " threads." << std::endl;
-    std::cout << "(Blocked queue buffer size limit: " + std::to_string(Config::max_size) + " elements)" << std::endl;
-    std::cout << std::endl;
+    std::cout << "Matrix dimensions: [" << Config::R << "x" << Config::C << "],\n";
+    std::cout << "filled with integer numbers with [" << Config::generation_ceiling << "] digits.\n";
+    std::cout << "Simple parallelization: matrix multiplication split between [" << Config::threads << "] threads;\n";
+    std::cout << "Strassen algorithm runs in parallel until reaching depth [" << Config::depth_limit << "] OR \n";
+    std::cout << "until matrices reach [" << Config::size_floor << "]" << std::endl;
 }
