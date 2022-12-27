@@ -85,8 +85,7 @@ Matrix Matrix::operator=(Matrix copy)
 Matrix operator*(Matrix first, Matrix second){
     int count_rows    = first.matrix.size();
     int count_columns = second.matrix[0].size();
-    assert(first.matrix.size() == second.matrix.size());
-    assert(first.matrix[0].size() == second.matrix[0].size());
+
 
 
     Matrix result(count_rows, count_columns);

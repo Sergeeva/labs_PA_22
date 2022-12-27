@@ -1,5 +1,4 @@
 #include "matrix.h"
-#include "semafore.h"
 #include <iostream>
 #include <stdlib.h>
 #include <unistd.h>
@@ -16,7 +15,7 @@
 
 
 #define size_bufer 5
-enum {N = 7, M = 7};
+enum {N = 7, M = 6};
 int threads_count = 5;
 
 
@@ -140,7 +139,6 @@ void SimpleMulti(Matrix& first, Matrix& second,Matrix& result)
     for(auto& thr: sum_threads) {
         thr.join();
     }
-    result.fileOutput("simple_milti");
 }
 
 
