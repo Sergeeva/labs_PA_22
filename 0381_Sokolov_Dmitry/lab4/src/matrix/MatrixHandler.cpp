@@ -208,16 +208,6 @@ Matrix MatrixHandler::parallel_mult(Matrix &A, Matrix &B, int thread_number) {
 
 //----------------------------------------------------------------------------------------------------------------------
 
-//void MatrixHandler::threaded_sum(Matrix &A, Matrix &B, std::promise<Matrix> result, int thread_number) {
-//    result.set_value(MatrixHandler::parallel_sum(A, B, thread_number));
-//}
-//
-//void MatrixHandler::threaded_sub(Matrix &A, Matrix &B, std::promise<Matrix> result, int thread_number) {
-//    result.set_value(MatrixHandler::parallel_sub(A, B, thread_number));
-//}
-
-//----------------------------------------------------------------------------------------------------------------------
-
 void MatrixHandler::output(Matrix& matrix, const std::string& path, const std::string& name) {
 
     std::string file_path = path + std::to_string(matrix.get_id()) + ".txt";

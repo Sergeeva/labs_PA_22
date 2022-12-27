@@ -68,7 +68,7 @@ Matrix Strassen::parallel_mult(Matrix &A, Matrix &B, int thread_number) {
 }
 
 Matrix Strassen::strassen_algorithm(const Matrix &A, const Matrix &B, int depth) {
-    Logger::trace(std::to_string(depth) + "depth reached! \n", true);
+    Logger::trace(std::to_string(depth) + " depth reached! \n", true);
 
     if (A.get_size() <= Config::size_floor) {
         Logger::trace("Size floor reached! Starting simple multiplication \n", true);
@@ -104,7 +104,7 @@ Matrix Strassen::serial_strassen(const Matrix &A, const Matrix &B, int depth) {
     Matrix p2 = Strassen::strassen_algorithm(a21 + a22, b11, depth);
     Matrix p3 = Strassen::strassen_algorithm(a11, b12 - b22, depth);
     Matrix p4 = Strassen::strassen_algorithm(a22, b21 - b11, depth);
-    Matrix p5 = Strassen::strassen_algorithm(a11 + a22, b21, depth);
+    Matrix p5 = Strassen::strassen_algorithm(a11 + a12, b22, depth);
     Matrix p6 = Strassen::strassen_algorithm(a21 - a11, b11 + b12, depth);
     Matrix p7 = Strassen::strassen_algorithm(a12 - a22, b21 + b22, depth);
 
@@ -135,30 +135,37 @@ Matrix Strassen::parallel_strassen(const Matrix &A, const Matrix &B, int depth) 
 
     std::promise<Matrix> P1;
     auto F1 = P1.get_future();
+    Logger::trace("P1 thread launched: " + std::to_string(get_num()) + "\n", true);
     Strassen::execute(execution, a11 + a22, b11 + b22, std::ref(P1), depth);
 
     std::promise<Matrix> P2;
     auto F2 = P2.get_future();
+    Logger::trace("P2 thread launched: " + std::to_string(get_num()) + "\n", true);
     Strassen::execute(execution, a21 + a22, b11, std::ref(P2), depth);
 
     std::promise<Matrix> P3;
     auto F3 = P3.get_future();
+    Logger::trace("P3 thread launched: " + std::to_string(get_num()) + "\n", true);
     Strassen::execute(execution, a11, b12 - b22, std::ref(P3), depth);
 
     std::promise<Matrix> P4;
     auto F4 = P4.get_future();
+    Logger::trace("P4 thread launched: " + std::to_string(get_num()) + "\n", true);
     Strassen::execute(execution, a22, b21 - b11, std::ref(P4), depth);
 
     std::promise<Matrix> P5;
     auto F5 = P5.get_future();
+    Logger::trace("P5 thread launched: " + std::to_string(get_num()) + "\n", true);
     Strassen::execute(execution, a11 + a12, b22, std::ref(P5), depth);
 
     std::promise<Matrix> P6;
     auto F6 = P6.get_future();
+    Logger::trace("P6 thread launched: " + std::to_string(get_num()) + "\n", true);
     Strassen::execute(execution, a21 - a11, b11 + b12, std::ref(P6), depth);
 
     std::promise<Matrix> P7;
     auto F7 = P7.get_future();
+    Logger::trace("P7 thread launched: " + std::to_string(get_num()) + "\n", true);
     Strassen::execute(execution, a12 - a22, b21 + b22, std::ref(P7), depth);
 
     Matrix p1 = F1.get();

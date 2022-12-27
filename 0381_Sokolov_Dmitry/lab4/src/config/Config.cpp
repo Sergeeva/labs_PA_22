@@ -1,8 +1,8 @@
 #include "config.h"
 
 // Matrix dimensions
-const int  Config::R = 2048;
-const int Config::C = 2048;
+const int  Config::R = 256;
+const int Config::C = 256;
 
 // Defines the maximum number of digits of the matrix values
 const int Config::generation_ceiling = 10;
@@ -17,8 +17,8 @@ const int Config::max_threads = 70;
 const int Config::threads = 7;
 
 // Strassen parameters
-const int Config::depth_limit = 5;
-const int Config::size_floor = 64;
+const int Config::depth_limit = 1;
+const int Config::size_floor = 4;
 
 
 // Logger parameter
