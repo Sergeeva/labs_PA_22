@@ -3,8 +3,8 @@
 
 typedef std::vector<std::vector<int>> Matrix;
 
-const int m_width = 2048;
-const int m_height = 2048;
+const int m_width = 256;
+const int m_height = 256;
 
 const int STRASSEN_MIN_MATRIX_SIZE = 64;
 const int THREADS_COUNT = 1;
