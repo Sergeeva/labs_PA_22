@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/lab5.dir/main.cpp.o -o lab5   -L/usr/lib/x86_64-linux-gnu/libOpenCL.so  -Wl,-rpath,/usr/lib/x86_64-linux-gnu/libOpenCL.so /usr/lib/x86_64-linux-gnu/libOpenCL.so 

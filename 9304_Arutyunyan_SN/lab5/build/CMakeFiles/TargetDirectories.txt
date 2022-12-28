@@ -1,3 +1,0 @@
-/home/samvelochka/Desktop/GenderStudies/PA/labs_PA_22/9304_Arutyunyan_SN/lab5/build/CMakeFiles/lab5.dir
-/home/samvelochka/Desktop/GenderStudies/PA/labs_PA_22/9304_Arutyunyan_SN/lab5/build/CMakeFiles/edit_cache.dir
-/home/samvelochka/Desktop/GenderStudies/PA/labs_PA_22/9304_Arutyunyan_SN/lab5/build/CMakeFiles/rebuild_cache.dir
